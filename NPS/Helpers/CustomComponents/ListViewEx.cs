@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections;
 using System.ComponentModel;
@@ -8,7 +9,7 @@ using System.Runtime.InteropServices;
 namespace ListViewEmbeddedControls
 {
     /// <summary>
-    /// Zusammenfassung f�r ListViewEx.
+    /// Zusammenfassung fÃ¼r ListViewEx.
     /// </summary>
     public class ListViewEx : ListView
     {
@@ -273,3 +274,4 @@ namespace ListViewEmbeddedControls
         }
     }
 }
+*/

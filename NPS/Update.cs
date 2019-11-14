@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -19,10 +20,9 @@ namespace NPS
 {
     public partial class GamePatches : Form
     {
-
-        Item title;
-        Action<Item> result;
-        Item newItem = null;
+        private Item title;
+        private Action<Item> result;
+        private Item newItem = null;
 
         public GamePatches(Item title, Action<Item> result)
         {
@@ -119,10 +119,10 @@ namespace NPS
         }
 
 
-        static string GetUpdateLink(string title)
+        private static string GetUpdateLink(string title)
         {
             string url = "https://gs-sec.ww.np.dl.playstation.net/pl/np/{0}/{1}/{0}-ver.xml";
-            string key = "0x" + Settings.Instance.HMACKey;
+            string key = "0x" + Settings.Instance.HmacKey;
 
             var binary = new List<byte>();
             for (int i = 2; i < key.Length; i += 2)
@@ -155,3 +155,4 @@ namespace NPS
         }
     }
 }
+*/

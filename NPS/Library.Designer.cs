@@ -1,4 +1,4 @@
-﻿namespace NPS
+/*namespace NPS
 {
     partial class Library
     {
@@ -170,4 +170,4 @@
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Button button4;
     }
-}
+}*/

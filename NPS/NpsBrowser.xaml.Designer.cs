@@ -1,3 +1,4 @@
+/*
 namespace NPS
 {
     partial class NPSBrowser
@@ -1021,3 +1022,4 @@ namespace NPS
     }
 }
 
+*/

@@ -1,4 +1,5 @@
-﻿using System;
+/*
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -12,7 +13,7 @@ using VS = System.Windows.Forms.VisualStyles;
 /*
 <li>Base class for custom tooltips.</li>
 <li>Office-2007-like tooltip class.</li>
-*/
+#1#
 namespace PresentationControls
 {
     /// <summary>
@@ -518,3 +519,4 @@ namespace PresentationControls
         #endregion
     }
 }
+*/

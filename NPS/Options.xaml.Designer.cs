@@ -1,3 +1,4 @@
+/*
 namespace NPS
 {
     partial class Options
@@ -1085,3 +1086,4 @@ namespace NPS
     }
 }
 
+*/

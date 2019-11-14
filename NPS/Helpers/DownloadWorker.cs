@@ -7,8 +7,10 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.IO.Compression;
+using Avalonia.Controls;
+using Avalonia.Threading;
+using NPS.Helpers;
 
 namespace NPS
 {
@@ -16,51 +18,44 @@ namespace NPS
     public class DownloadWorker
     {
         public Item currentDownload;
+
         //private WebClient webClient;
         private DateTime lastUpdate;
         private long lastBytes;
-        [System.NonSerialized]
-        public ProgressBar progress = new ProgressBar();
-        public ListViewItem lvi;
+        [System.NonSerialized] public ProgressBar progress = new ProgressBar();
+        public DownloadWorkerItem lvi;
+
         public int progressValue = 0;
         //public bool isRunning { get; private set; }
         //public bool isCompleted { get; private set; }
         //public bool isCanceled { get; private set; }
 
         public WorkerStatus status { get; private set; }
-        [System.NonSerialized]
-        Timer timer = new Timer();
-        [System.NonSerialized]
-        Form formCaller;
+        [System.NonSerialized] private DispatcherTimer timer = new DispatcherTimer();
 
-        public DownloadWorker(Item itm, Form f)
+
+        public DownloadWorker(Item itm)
         {
             currentDownload = itm;
-            lvi = new ListViewItem(itm.TitleName);
-            lvi.SubItems.Add("Waiting");
-            lvi.SubItems.Add("");
-            lvi.SubItems.Add("");
-            lvi.Tag = this;
+            lvi = new DownloadWorkerItem(itm.TitleName);
+            lvi.Speed = "Waiting";
             //isRunning = false;
             //isCanceled = false;
             //isCompleted = false;
 
-            timer.Interval = 1000;
+            timer.Interval = TimeSpan.FromSeconds(1);
             timer.Tick += Timer_Tick;
-            formCaller = f;
             status = WorkerStatus.Queued;
         }
 
-        public void Recreate(Form formCaller)
+        public void Recreate()
         {
-            this.formCaller = formCaller;
             progress = new ProgressBar();
             if (progressValue > 100) progressValue = 100;
             progress.Value = progressValue;
-            timer = new Timer();
-            timer.Interval = 1000;
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(1);
             timer.Tick += Timer_Tick;
-            lvi.Tag = this;
 
             if (status == WorkerStatus.Running)
                 Start();
@@ -70,8 +65,8 @@ namespace NPS
             }
             else if (this.status == WorkerStatus.Completed)
             {
-                lvi.SubItems[1].Text = "";
-                lvi.SubItems[2].Text = "Completed";
+                lvi.Status = "";
+                lvi.Status = "Completed";
             }
         }
 
@@ -85,7 +80,9 @@ namespace NPS
 
             Task.Run(() =>
             {
-                DownloadFile(currentDownload.pkg, Path.Combine(Settings.Instance.downloadDir, currentDownload.DownloadFileName + currentDownload.extension));
+                DownloadFile(currentDownload.pkg,
+                    Path.Combine(Settings.Instance.DownloadDir,
+                        currentDownload.DownloadFileName + currentDownload.extension));
             });
         }
 
@@ -105,8 +102,8 @@ namespace NPS
                 unpackProcess.Kill();
             }
 
-            lvi.SubItems[1].Text = "";
-            lvi.SubItems[2].Text = "Canceled";
+            lvi.Speed = "";
+            lvi.Status = "Canceled";
             progressValue = 0;
             progress.Value = progressValue;
             DeletePkg();
@@ -114,7 +111,6 @@ namespace NPS
 
         public void Pause()
         {
-
             if (status == WorkerStatus.Running || status == WorkerStatus.Queued)
             {
                 timer.Stop();
@@ -125,6 +121,7 @@ namespace NPS
                 {
                     smRespStream.Close();
                 }
+
                 if (saveFileStream != null)
                     saveFileStream.Close();
                 if (unpackProcess != null && !unpackProcess.HasExited)
@@ -132,8 +129,9 @@ namespace NPS
                     unpackProcess.Kill();
                 }
 
-                lvi.SubItems[1].Text = "Paused";
+                lvi.Speed = "Paused";
             }
+
             //progress.Value = 0;
         }
 
@@ -141,11 +139,19 @@ namespace NPS
         {
             if (status == WorkerStatus.Paused || status == WorkerStatus.DownloadError)
             {
-                lvi.SubItems[1].Text = "Queued";
+                lvi.Speed = "Queued";
                 status = WorkerStatus.Queued;
             }
         }
-        public string Pkg { get { return Path.Combine(Settings.Instance.downloadDir, currentDownload.DownloadFileName + currentDownload.extension); } }
+
+        public string Pkg
+        {
+            get
+            {
+                return Path.Combine(Settings.Instance.DownloadDir,
+                    currentDownload.DownloadFileName + currentDownload.extension);
+            }
+        }
 
         public void DeletePkg()
         {
@@ -155,19 +161,24 @@ namespace NPS
                 {
                     try
                     {
-                        if (File.Exists(Path.Combine(Settings.Instance.downloadDir, currentDownload.DownloadFileName + currentDownload.extension)))
+                        if (File.Exists(Path.Combine(Settings.Instance.DownloadDir,
+                            currentDownload.DownloadFileName + currentDownload.extension)))
                         {
                             System.Threading.Thread.Sleep(400);
-                            File.Delete(Path.Combine(Settings.Instance.downloadDir, currentDownload.DownloadFileName + currentDownload.extension));
+                            File.Delete(Path.Combine(Settings.Instance.DownloadDir,
+                                currentDownload.DownloadFileName + currentDownload.extension));
                         }
                     }
-                    catch { i = 5; }
+                    catch
+                    {
+                        i = 5;
+                    }
                 }
             }
         }
 
-        [System.NonSerialized]
-        Process unpackProcess = null;
+        [System.NonSerialized] private Process unpackProcess = null;
+
         public void Unpack()
         {
             if (currentDownload.ItsPS3)
@@ -175,6 +186,7 @@ namespace NPS
                 UnpackPS3();
                 return;
             }
+
             if (currentDownload.ItsCompPack)
             {
                 UnpackCompPack();
@@ -183,7 +195,7 @@ namespace NPS
 
             if (this.status == WorkerStatus.Downloaded || this.status == WorkerStatus.Completed)
             {
-                lvi.SubItems[2].Text = "Unpacking";
+                lvi.Status = "Unpacking";
 
                 String tempName = "";
                 string dlc = "";
@@ -201,10 +213,8 @@ namespace NPS
 
                 foreach (var i in tempStr)
                 {
-
                     if ((i.Contains("3.6")) && (!i.Contains("3.61+"))) fwVersion = i;
                     if (!i.Contains("3.6")) tempName += i + " ";
-
                 }
 
 
@@ -214,7 +224,8 @@ namespace NPS
 
                 var replacements = new Dictionary<string, string>
                 {
-                    ["{pkgfile}"] = "\"" + Path.Combine(Settings.Instance.downloadDir, currentDownload.DownloadFileName + currentDownload.extension) + "\"",
+                    ["{pkgfile}"] = "\"" + Path.Combine(Settings.Instance.DownloadDir,
+                                        currentDownload.DownloadFileName + currentDownload.extension) + "\"",
                     ["{titleid}"] = currentDownload.TitleId.Substring(0, 9),
                     ["{gametitle}"] = tempName,
                     ["{region}"] = currentDownload.Region,
@@ -225,11 +236,12 @@ namespace NPS
                 };
 
                 ProcessStartInfo a = new ProcessStartInfo();
-                a.WorkingDirectory = Settings.Instance.downloadDir + Path.DirectorySeparatorChar;
-                a.FileName = string.Format("\"{0}\"", Settings.Instance.pkgPath);
+                a.WorkingDirectory = Settings.Instance.DownloadDir + Path.DirectorySeparatorChar;
+                a.FileName = string.Format("\"{0}\"", Settings.Instance.PkgPath);
                 a.WindowStyle = ProcessWindowStyle.Hidden;
                 a.CreateNoWindow = true;
-                a.Arguments = replacements.Aggregate(Settings.Instance.pkgParams.ToLower(), (str, rep) => str.Replace(rep.Key, rep.Value));
+                a.Arguments = replacements.Aggregate(Settings.Instance.PkgParams.ToLower(),
+                    (str, rep) => str.Replace(rep.Key, rep.Value));
                 unpackProcess = new Process();
                 unpackProcess.StartInfo = a;
 
@@ -245,27 +257,29 @@ namespace NPS
             }
         }
 
-        void UnpackCompPack()
+        private void UnpackCompPack()
         {
             if (this.status == WorkerStatus.Downloaded || this.status == WorkerStatus.Completed)
             {
                 this.status = WorkerStatus.Completed;
                 try
                 {
-                    lvi.SubItems[2].Text = "Processing";
+                    lvi.Status = "Processing";
 
                     //if (Directory.Exists(Path.Combine(Settings.Instance.downloadDir, "rePatch", currentDownload.TitleId)))
                     //    Directory.Delete(Path.Combine(Settings.Instance.downloadDir, "rePatch", currentDownload.TitleId), true);
 
 
-
-                    using (var archive = System.IO.Compression.ZipFile.OpenRead(Path.Combine(Settings.Instance.downloadDir, currentDownload.DownloadFileName + currentDownload.extension)))
+                    using (var archive = System.IO.Compression.ZipFile.OpenRead(
+                        Path.Combine(Settings.Instance.DownloadDir,
+                            currentDownload.DownloadFileName + currentDownload.extension)))
                     {
                         foreach (var entry in archive.Entries)
                         {
                             if (entry.Length == 0) continue;
 
-                            string file = Path.Combine(Settings.Instance.downloadDir, "rePatch", currentDownload.TitleId, entry.FullName);
+                            string file = Path.Combine(Settings.Instance.DownloadDir, "rePatch",
+                                currentDownload.TitleId, entry.FullName);
                             var dir = Path.GetDirectoryName(file);
 
                             if (!Directory.Exists(dir))
@@ -276,40 +290,48 @@ namespace NPS
                     }
 
                     //System.IO.Compression.ZipFile.ExtractToDirectory(Path.Combine(Settings.Instance.downloadDir, currentDownload.DownloadFileName + currentDownload.extension), Path.Combine(Settings.Instance.downloadDir, "rePatch", currentDownload.TitleId));
-                    lvi.SubItems[1].Text = "";
-                    lvi.SubItems[2].Text = "Completed";
-                    if (!Settings.Instance.history.completedDownloading.Contains(this.currentDownload))
-                        Settings.Instance.history.completedDownloading.Add(this.currentDownload);
+                    lvi.Speed = "";
+                    lvi.Status = "Completed";
+                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(this.currentDownload))
+                        Settings.Instance.HistoryInstance.completedDownloading.Add(this.currentDownload);
 
-                    if (Settings.Instance.deleteAfterUnpack)
+                    if (Settings.Instance.DeleteAfterUnpack)
                         DeletePkg();
                 }
                 catch (Exception err)
                 {
-                    lvi.SubItems[1].Text = "Error!";
-                    lvi.SubItems[2].Text = err.Message;
+                    lvi.Speed = "Error!";
+                    lvi.Status = err.Message;
                 }
             }
         }
 
-        void UnpackPS3()
+        private void UnpackPS3()
         {
             if (this.status == WorkerStatus.Downloaded || this.status == WorkerStatus.Completed)
             {
                 this.status = WorkerStatus.Completed;
                 try
                 {
-                    lvi.SubItems[2].Text = "Processing";
-                    string path = Settings.Instance.downloadDir + Path.DirectorySeparatorChar + "packages";
+                    lvi.Status = "Processing";
+                    string path = Settings.Instance.DownloadDir + Path.DirectorySeparatorChar + "packages";
                     if (!Directory.Exists(path))
                     {
                         Directory.CreateDirectory(path);
                     }
-                    File.Move(Settings.Instance.downloadDir + Path.DirectorySeparatorChar + currentDownload.DownloadFileName + currentDownload.extension, path + Path.DirectorySeparatorChar + currentDownload.DownloadFileName + currentDownload.extension);
 
-                    path = Settings.Instance.downloadDir + Path.DirectorySeparatorChar + "exdata";
+                    File.Move(
+                        Settings.Instance.DownloadDir + Path.DirectorySeparatorChar + currentDownload.DownloadFileName +
+                        currentDownload.extension,
+                        path + Path.DirectorySeparatorChar + currentDownload.DownloadFileName +
+                        currentDownload.extension);
 
-                    if (!string.IsNullOrEmpty(currentDownload.ContentId) && currentDownload.ContentId.ToLower() != "missing" && currentDownload.zRif.ToLower() != "NOT REQUIRED".ToLower() && currentDownload.zRif.Length % 2 == 0)
+                    path = Settings.Instance.DownloadDir + Path.DirectorySeparatorChar + "exdata";
+
+                    if (!string.IsNullOrEmpty(currentDownload.ContentId) &&
+                        currentDownload.ContentId.ToLower() != "missing" &&
+                        currentDownload.zRif.ToLower() != "NOT REQUIRED".ToLower() &&
+                        currentDownload.zRif.Length % 2 == 0)
                     {
                         if (!Directory.Exists(path))
                         {
@@ -322,26 +344,25 @@ namespace NPS
                             array[i] = Convert.ToByte(currentDownload.zRif.Substring(i * 2, 2), 16);
                         }
 
-                        File.WriteAllBytes(path + Path.DirectorySeparatorChar + currentDownload.ContentId + ".rap", array);
+                        File.WriteAllBytes(path + Path.DirectorySeparatorChar + currentDownload.ContentId + ".rap",
+                            array);
                     }
 
-                    lvi.SubItems[1].Text = "";
-                    lvi.SubItems[2].Text = "Completed";
+                    lvi.Speed = "";
+                    lvi.Status = "Completed";
 
-                    if (!Settings.Instance.history.completedDownloading.Contains(this.currentDownload))
-                        Settings.Instance.history.completedDownloading.Add(this.currentDownload);
-
+                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(this.currentDownload))
+                        Settings.Instance.HistoryInstance.completedDownloading.Add(this.currentDownload);
                 }
                 catch (Exception err)
                 {
-                    lvi.SubItems[1].Text = "Error!";
-                    lvi.SubItems[2].Text = err.Message;
+                    lvi.Speed = "Error!";
+                    lvi.Status = err.Message;
                 }
-
             }
         }
 
-        List<string> errors = new List<string>();
+        private List<string> errors = new List<string>();
 
         private void UnpackProcess_ErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
@@ -355,45 +376,44 @@ namespace NPS
             var proc = (sender as Process);
             if (proc.ExitCode == 0)
             {
-                formCaller.Invoke(new Action(() =>
+                Dispatcher.UIThread.Post(() =>
                 {
-                    lvi.SubItems[1].Text = "";
-                    lvi.SubItems[2].Text = "Completed";
+                    lvi.Speed = "";
+                    lvi.Status = "Completed";
 
-                    if (!Settings.Instance.history.completedDownloading.Contains(this.currentDownload))
-                        Settings.Instance.history.completedDownloading.Add(this.currentDownload);
+                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(this.currentDownload))
+                        Settings.Instance.HistoryInstance.completedDownloading.Add(this.currentDownload);
 
-                    if (Settings.Instance.deleteAfterUnpack)
+                    if (Settings.Instance.DeleteAfterUnpack)
                         DeletePkg();
-                }));
+                });
             }
             else
             {
-                formCaller.Invoke(new Action(() =>
+                Dispatcher.UIThread.Post(() =>
                 {
-                    lvi.SubItems[1].Text = "PKG decrypt err!";
-                    lvi.SubItems[2].Text = "";
+                    lvi.Speed = "PKG decrypt err!";
+                    lvi.Status = "";
 
                     errors.Remove(null);
                     if (errors.Count > 0)
                     {
-                        if (errors[0].Contains("pkg_dec - PS Vita PKG decryptor/unpacker")) errors.Remove(errors[0]);
+                        if (errors[0].Contains("pkg_dec - PS Vita PKG decryptor/unpacker"))
+                            errors.Remove(errors[0]);
                         if (errors.Count > 0)
-                            lvi.SubItems[2].Text = errors[0];
+                            lvi.Status = errors[0];
                     }
-                }
-                ));
+                });
             }
         }
 
 
-        long totalSize = 0;
-        long completedSize = 0;
-        [System.NonSerialized]
-        System.IO.Stream smRespStream;
-        [System.NonSerialized]
-        System.IO.FileStream saveFileStream;
-        void DownloadFile(string sSourceURL, string sDestinationPath)
+        private long totalSize = 0;
+        private long completedSize = 0;
+        [System.NonSerialized] private System.IO.Stream smRespStream;
+        [System.NonSerialized] private System.IO.FileStream saveFileStream;
+
+        private void DownloadFile(string sSourceURL, string sDestinationPath)
         {
             try
             {
@@ -405,36 +425,37 @@ namespace NPS
                 if (System.IO.File.Exists(sDestinationPath))
                 {
                     System.IO.FileInfo fINfo =
-                       new System.IO.FileInfo(sDestinationPath);
+                        new System.IO.FileInfo(sDestinationPath);
                     iExistLen = fINfo.Length;
                 }
+
                 ;
                 if (iExistLen > 0)
                     saveFileStream = new System.IO.FileStream(sDestinationPath,
-                      System.IO.FileMode.Append, System.IO.FileAccess.Write,
-                      System.IO.FileShare.ReadWrite);
+                        System.IO.FileMode.Append, System.IO.FileAccess.Write,
+                        System.IO.FileShare.ReadWrite);
                 else
                     saveFileStream = new System.IO.FileStream(sDestinationPath,
-                      System.IO.FileMode.Create, System.IO.FileAccess.Write,
-                      System.IO.FileShare.ReadWrite);
+                        System.IO.FileMode.Create, System.IO.FileAccess.Write,
+                        System.IO.FileShare.ReadWrite);
 
                 HttpWebRequest hwRq;
                 System.Net.HttpWebResponse hwRes;
                 var urr = new Uri(sSourceURL);
-                hwRq = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(urr);
-                hwRq.Proxy = Settings.Instance.proxy;
-                hwRes = (System.Net.HttpWebResponse)hwRq.GetResponse();
+                hwRq = (System.Net.HttpWebRequest) System.Net.HttpWebRequest.Create(urr);
+                hwRq.Proxy = Settings.Instance.Proxy;
+                hwRes = (System.Net.HttpWebResponse) hwRq.GetResponse();
                 hwRes.Close();
 
                 long totalLength = hwRes.ContentLength;
                 totalSize = totalLength;
                 if (totalLength != iExistLen)
                 {
-                    hwRq = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(urr);
-                    hwRq.Proxy = Settings.Instance.proxy;
+                    hwRq = (System.Net.HttpWebRequest) System.Net.HttpWebRequest.Create(urr);
+                    hwRq.Proxy = Settings.Instance.Proxy;
                     hwRq.AddRange(iExistLen);
 
-                    hwRes = (System.Net.HttpWebResponse)hwRq.GetResponse();
+                    hwRes = (System.Net.HttpWebResponse) hwRq.GetResponse();
                     smRespStream = hwRes.GetResponseStream();
 
                     iFileSize = hwRes.ContentLength;
@@ -454,7 +475,6 @@ namespace NPS
                         {
                             lastUpdate = DateTime.Now;
                             lastBytes = completedSize;
-
                         }
                         else
                         {
@@ -466,33 +486,32 @@ namespace NPS
                                 bytesPerSecond = bytesChange / timeSpan.Seconds;
                                 lastBytes = completedSize;
                                 lastUpdate = now;
-
-
                             }
                         }
                     }
+
                     smRespStream.Close();
                 }
 
 
                 saveFileStream.Close();
-                formCaller.Invoke(new Action(() => { DownloadCompleted(); }));
+
+                Dispatcher.UIThread.Post(DownloadCompleted);
             }
             catch (Exception err)
             {
-
-                formCaller.Invoke(new Action(() =>
+                Dispatcher.UIThread.Post(() =>
                 {
                     this.Pause();
-                    MessageBox.Show("Unable to download \"" + currentDownload.TitleName + "\"." + Environment.NewLine + err.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }));
-
+                    MessageBox.Show(
+                        "Unable to download \"" + currentDownload.TitleName + "\"." + Environment.NewLine + err.Message,
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                });
             }
-
         }
 
 
-        long bytesPerSecond = 0;
+        private long bytesPerSecond = 0;
 
 
         private void DownloadCompleted()
@@ -501,17 +520,14 @@ namespace NPS
 
             this.status = WorkerStatus.Downloaded;
 
-            lvi.SubItems[1].Text = "";
+            lvi.Speed = "";
 
 
             Unpack();
 
             progressValue = 100;
             progress.Value = progressValue;
-
-
         }
-
 
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -522,11 +538,11 @@ namespace NPS
                 speed = bytesPerSecond.ToString() + " KB/s";
             else
             {
-                speed = ((float)((float)bytesPerSecond / 1024)).ToString("0.00") + " MB/s";
+                speed = ((float) ((float) bytesPerSecond / 1024)).ToString("0.00") + " MB/s";
             }
 
-            lvi.SubItems[1].Text = speed;
-            var prgs = (float)completedSize / (float)totalSize;
+            lvi.Speed = speed;
+            var prgs = (float) completedSize / (float) totalSize;
 
             try
             {
@@ -536,13 +552,35 @@ namespace NPS
                     progress.Value = progressValue;
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
-            lvi.SubItems[2].Text = completedSize / (1024 * 1024) + "MB/" + totalSize / (1024 * 1024) + "MB";
+            lvi.Status = completedSize / (1024 * 1024) + "MB/" + totalSize / (1024 * 1024) + "MB";
         }
     }
 
-    public enum WorkerStatus { Queued, Running, Paused, Completed, Downloaded, Canceled, DownloadError }
+    public enum WorkerStatus
+    {
+        Queued,
+        Running,
+        Paused,
+        Completed,
+        Downloaded,
+        Canceled,
+        DownloadError
+    }
+
+    public class DownloadWorkerItem
+    {
+        public DownloadWorkerItem(string title)
+        {
+            Title = title;
+        }
+
+        public string Title { get; }
+        public string Speed { get; set; } = "";
+        public string Status { get; set; } = "";
+        public double Progress { get; set; } = 0;
+    }
 }
-
-

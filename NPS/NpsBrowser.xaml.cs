@@ -4,63 +4,72 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-using SimpleJson;
-using System.Globalization;
-using System.Security.Cryptography;
-using System.Xml;
-using System.Text.RegularExpressions;
+using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
+using Newtonsoft.Json;
+using NPS.Helpers;
+using ReactiveUI;
 
 namespace NPS
 {
-    public partial class NPSBrowser : Form
+    public partial class NpsBrowser : Window
     {
         public const string version = "0.94"; //Dyrqrap
-        List<Item> currentDatabase = new List<Item>();
+        private List<Item> currentDatabase = new List<Item>();
 
-        List<Item> databaseAll = new List<Item>();
-        List<Item> avatarsDbs = new List<Item>();
+        private List<Item> databaseAll = new List<Item>();
+
+        private List<Item> avatarsDbs = new List<Item>();
+
         //List<Item> dlcsDbs = new List<Item>();
         //List<Item> themesDbs = new List<Item>();
-        List<Item> updatesDbs = new List<Item>();
+        private List<Item> updatesDbs = new List<Item>();
 
-        HashSet<string> types = new HashSet<string>();
-        HashSet<string> regions = new HashSet<string>();
-        int currentOrderColumn = 0;
-        bool currentOrderInverted = false;
+        private HashSet<string> types = new HashSet<string>();
+        private HashSet<string> regions = new HashSet<string>();
+        private int currentOrderColumn = 0;
+        private bool currentOrderInverted = false;
 
-        List<DownloadWorker> downloads = new List<DownloadWorker>();
-        Release[] releases = null;
+        private List<DownloadWorker> downloads = new List<DownloadWorker>();
+        private Release[] releases = null;
 
-        public NPSBrowser()
+        public NpsBrowser()
         {
             InitializeComponent();
-            this.Text += " " + version;
-            this.Icon = Properties.Resources._8_512;
-            new Settings();
 
-            if (string.IsNullOrEmpty(Settings.Instance.PSVUri) && string.IsNullOrEmpty(Settings.Instance.PSVDLCUri))
-            {
-                MessageBox.Show("Application did not provide any links to external files or decrypt mechanism.\r\nYou need to specify tsv (tab splitted text) file with your personal links to pkg files on your own.\r\n\r\nFormat: TitleId Region Name Pkg Key", "Disclaimer!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                Options o = new Options(this);
-                o.ShowDialog();
-            }
-
-            NewVersionCheck();
+            Title += " " + version;
         }
 
-        private void NoPayStationBrowser_Load(object sender, EventArgs e)
+        public async void Start()
         {
-            foreach (var hi in Settings.Instance.history.currentlyDownloading)
+            NewVersionCheck();
+
+            if (string.IsNullOrEmpty(Settings.Instance.PsvUri) && string.IsNullOrEmpty(Settings.Instance.PsvDlcUri))
             {
-                DownloadWorker dw = hi;
-                dw.Recreate(this);
-                lstDownloadStatus.Items.Add(dw.lvi);
-                lstDownloadStatus.AddEmbeddedControl(dw.progress, 3, lstDownloadStatus.Items.Count - 1);
-                downloads.Add(dw);
+                MessageBox.Show(
+                    "Application did not provide any links to external files or decrypt mechanism.\r\nYou need to specify tsv (tab splitted text) file with your personal links to pkg files on your own.\r\n\r\nFormat: TitleId Region Name Pkg Key",
+                    "Disclaimer!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                var o = new Options(this);
+                await o.ShowDialog(this);
+            }
+        }
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+
+            foreach (var hi in Settings.Instance.HistoryInstance.currentlyDownloading)
+            {
+                hi.Recreate();
+                // TODO:
+                /*
+                _downloadStatusList
+                lstDownloadStatus.Items.Add(hi.lvi);
+                lstDownloadStatus.AddEmbeddedControl(hi.progress, 3, lstDownloadStatus.Items.Count - 1);*/
+                downloads.Add(hi);
             }
 
             ServicePointManager.DefaultConnectionLimit = 30;
@@ -87,7 +96,6 @@ namespace NPS
             {
                 Sync(null);
             }
-
         }
 
         public void Sync(object sender, EventArgs e)
@@ -97,6 +105,7 @@ namespace NPS
 
         public void Sync(Action result)
         {
+/*
             SyncDB sync = new SyncDB();
             sync.Owner = this;
             sync.Show();
@@ -106,7 +115,6 @@ namespace NPS
                 databaseAll = g;
                 Invoke(new Action(() =>
                 {
-
                     FinalizeDBLoad();
 
                     NPCache.I.localDatabase = databaseAll;
@@ -117,9 +125,10 @@ namespace NPS
                     sync.Close();
                 }));
             });
+*/
         }
 
-        List<Item> GetDatabase(string type = "GAME")
+        private List<Item> GetDatabase(string type = "GAME")
         {
             if (type == "DLC")
                 return databaseAll.Where((i) => (i.IsDLC == true && i.IsTheme == false)).ToList();
@@ -131,8 +140,9 @@ namespace NPS
             return new List<Item>();
         }
 
-        void FinalizeDBLoad()
+        private void FinalizeDBLoad()
         {
+/*
             //var tempList = new List<Item>(dlcsDbs);
             //tempList.AddRange(gamesDbs);
             rbnDLC.Enabled = false;
@@ -172,28 +182,29 @@ namespace NPS
                 cmbRegion.Items.Add(s);
 
 
-            int countSelected = Settings.Instance.selectedRegions.Count;
+            int countSelected = Settings.Instance.SelectedRegions.Count;
             foreach (var a in cmbRegion.CheckBoxItems)
             {
                 if (countSelected > 0)
                 {
-                    if (Settings.Instance.selectedRegions.Contains(a.Text)) a.Checked = true;
+                    if (Settings.Instance.SelectedRegions.Contains(a.Text)) a.Checked = true;
                 }
                 else
                     a.Checked = true;
             }
 
-            countSelected = Settings.Instance.selectedTypes.Count;
+            countSelected = Settings.Instance.SelectedTypes.Count;
 
             foreach (var a in cmbType.CheckBoxItems)
             {
                 if (countSelected > 0)
                 {
-                    if (Settings.Instance.selectedTypes.Contains(a.Text)) a.Checked = true;
+                    if (Settings.Instance.SelectedTypes.Contains(a.Text)) a.Checked = true;
                 }
                 else
                     a.Checked = true;
             }
+
             var dlcsDbs = GetDatabase("DLC").ToArray();
 
             foreach (var itm in databaseAll)
@@ -214,10 +225,12 @@ namespace NPS
             cmbRegion.CheckBoxCheckedChanged += txtSearch_TextChanged;
             cmbType.CheckBoxCheckedChanged += txtSearch_TextChanged;
             txtSearch_TextChanged(null, null);
+*/
         }
 
-        void SetCheckboxState(List<Item> list, int id)
+        private void SetCheckboxState(List<Item> list, int id)
         {
+/*
             if (list.Count == 0)
             {
                 cmbType.CheckBoxItems[id].Enabled = false;
@@ -228,67 +241,64 @@ namespace NPS
                 cmbType.CheckBoxItems[id].Enabled = true;
                 cmbType.CheckBoxItems[id].Checked = true;
             }
+*/
         }
-        private void CmbRegion_CheckBoxCheckedChanged(object sender, EventArgs e)
+
+/*        private void CmbRegion_CheckBoxCheckedChanged(object sender, EventArgs e)
         {
             txtSearch_TextChanged(null, null);
+        }*/
 
-        }
-
-        private void NewVersionCheck()
+        private async void NewVersionCheck()
         {
-            if (version.Contains("beta")) return;
-
-            Task.Run(() =>
+            if (version.Contains("beta"))
             {
-                try
+                return;
+            }
+
+            try
+            {
+                using var client = new HttpClient(new SocketsHttpHandler
                 {
-                    ServicePointManager.Expect100Continue = true;
-                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                    WebClient wc = new WebClient();
-                    wc.Proxy = Settings.Instance.proxy;
-                    wc.Encoding = Encoding.UTF8;
-                    wc.Credentials = CredentialCache.DefaultCredentials;
-                    wc.Headers.Add("user-agent", "MyPersonalApp :)");
-                    string content = wc.DownloadString("https://nopaystation.com/vita/npsReleases/version.json");
-                    wc.Dispose();
+                    Proxy = Settings.Instance.Proxy,
+                    Credentials = CredentialCache.DefaultCredentials
+                });
+                client.DefaultRequestHeaders.Add("user-agent", "MyPersonalApp");
+                var content = await client.GetStringAsync("https://nopaystation.com/vita/npsReleases/version.json");
 
-                    //dynamic test = JsonConvert.DeserializeObject<dynamic>(content);
-                    releases = SimpleJson.SimpleJson.DeserializeObject<Release[]>(content);
+                releases = JsonConvert.DeserializeObject<Release[]>(content);
 
-                    string newVer = releases[0].version;
-                    if (version != newVer)
-                    {
-                        Invoke(new Action(() =>
-                        {
-                            downloadUpdateToolStripMenuItem.Visible = true;
-                            this.Text += string.Format("         (!! new version {0} available !!)", newVer);
-
-                        }));
-                    }
+                var newVer = releases[0].version;
+                if (version != newVer)
+                {
+                    DownloadUpdateMenuItem.IsVisible = true;
+                    Title += $"         (!! new version {newVer} available !!)";
                 }
-                catch (Exception e) { Console.WriteLine(e); }
-            });
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception while checking for new version:\n{0}", e);
+            }
         }
-
-
 
 
         private void RefreshList(List<Item> items)
         {
+/*
             List<ListViewItem> list = new List<ListViewItem>();
 
             foreach (var item in items)
             {
                 var a = new ListViewItem(item.TitleId);
-                if (Settings.Instance.history.completedDownloading.Contains(item))
+                if (Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
                 {
                     int newdlc = 0;
-                    foreach (var i in item.DlcItm) if (!Settings.Instance.history.completedDownloading.Contains(i)) newdlc++;
+                    foreach (var i in item.DlcItm)
+                        if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(i))
+                            newdlc++;
 
                     if (newdlc > 0) a.BackColor = ColorTranslator.FromHtml("#E700E7");
                     else a.BackColor = ColorTranslator.FromHtml("#B7FF7C");
-
                 }
 
                 a.SubItems.Add(item.Region);
@@ -325,41 +335,44 @@ namespace NPS
             //else if (rbnPSX.Checked) type = "PSX Games";
 
             lblCount.Text = $"{list.Count}/{currentDatabase.Count} {type}";
+*/
         }
 
+/*
         // Form
         private void NPSBrowser_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Settings.Instance.history.currentlyDownloading.Clear();
+            Settings.Instance.HistoryInstance.currentlyDownloading.Clear();
 
             foreach (var lstItm in lstDownloadStatus.Items)
             {
                 DownloadWorker dw = ((lstItm as ListViewItem).Tag as DownloadWorker);
 
-                Settings.Instance.history.currentlyDownloading.Add(dw);
+                Settings.Instance.HistoryInstance.currentlyDownloading.Add(dw);
             }
 
-            Settings.Instance.selectedRegions.Clear();
+            Settings.Instance.SelectedRegions.Clear();
             foreach (var a in cmbRegion.CheckBoxItems)
                 if (a.Checked)
-                    Settings.Instance.selectedRegions.Add(a.Text);
+                    Settings.Instance.SelectedRegions.Add(a.Text);
 
-            Settings.Instance.selectedTypes.Clear();
+            Settings.Instance.SelectedTypes.Clear();
 
             foreach (var a in cmbType.CheckBoxItems)
                 if (a.Checked)
-                    Settings.Instance.selectedTypes.Add(a.Text)
+                    Settings.Instance.SelectedTypes.Add(a.Text)
                         ;
 
             Settings.Instance.Save();
             NPCache.I.Save();
         }
+*/
 
         // Menu
-        private void optionsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void optionsToolStripMenuItem_Click()
         {
-            Options o = new Options(this);
-            o.ShowDialog();
+            var o = new Options(this);
+            o.ShowDialog(this);
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -376,13 +389,12 @@ namespace NPS
 
         public void updateSearch()
         {
-
+/*
             List<Item> itms = new List<Item>();
             String[] splitStr = txtSearch.Text.Split(' ');
 
             foreach (var item in currentDatabase)
             {
-
                 bool dirty = false;
 
 
@@ -391,102 +403,86 @@ namespace NPS
                     if (i.Length == 0) continue;
                     if (i.StartsWith("-") == true)
                     {
-
-                        if ((item.TitleName.ToLower().Contains(i.Substring(1).ToLower()) == true) || (item.ContentId.ToLower().Contains(i.Substring(1).ToLower()) == true))
+                        if ((item.TitleName.ToLower().Contains(i.Substring(1).ToLower()) == true) ||
+                            (item.ContentId.ToLower().Contains(i.Substring(1).ToLower()) == true))
                         {
-
                             dirty = true;
                             break;
-
                         }
-
                     }
-                    else if ((item.TitleName.ToLower().Contains(i.ToLower()) == false) && (item.TitleId.ToLower().Contains(i.ToLower()) == false))
+                    else if ((item.TitleName.ToLower().Contains(i.ToLower()) == false) &&
+                             (item.TitleId.ToLower().Contains(i.ToLower()) == false))
                     {
-
                         dirty = true;
                         break;
-
                     }
-
                 }
 
 
                 if (dirty == false)
                 {
-
                     if (rbnDLC.Checked == true)
                     {
-
-                        if ((rbnUndownloaded.Checked == true) && (Settings.Instance.history.completedDownloading.Contains(item))) dirty = true;
-                        if ((rbnDownloaded.Checked == true) && (!Settings.Instance.history.completedDownloading.Contains(item))) dirty = true;
-
+                        if ((rbnUndownloaded.Checked == true) &&
+                            (Settings.Instance.HistoryInstance.completedDownloading.Contains(item))) dirty = true;
+                        if ((rbnDownloaded.Checked == true) &&
+                            (!Settings.Instance.HistoryInstance.completedDownloading.Contains(item))) dirty = true;
                     }
                     else
                     {
-
-                        if ((!Settings.Instance.history.completedDownloading.Contains(item)) && (rbnDownloaded.Checked == true)) dirty = true;
-                        else if (Settings.Instance.history.completedDownloading.Contains(item))
+                        if ((!Settings.Instance.HistoryInstance.completedDownloading.Contains(item)) &&
+                            (rbnDownloaded.Checked == true)) dirty = true;
+                        else if (Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
                         {
-
-
                             if ((rbnUndownloaded.Checked == true) && (chkUnless.Checked == false)) dirty = true;
 
                             else if ((rbnUndownloaded.Checked == true) && (chkUnless.Checked == true))
                             {
-
-
                                 int newDLC = 0;
 
                                 foreach (var item2 in item.DlcItm)
                                 {
-
-                                    if (!Settings.Instance.history.completedDownloading.Contains(item2)) newDLC++;
-
-
+                                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(item2))
+                                        newDLC++;
                                 }
 
                                 if (newDLC == 0) dirty = true;
-
                             }
-
                         }
-
                     }
-
                 }
 
-                if ((dirty == false) && ContainsCmbBox(cmbRegion, item.Region) && ContainsCmbBox(cmbType, item.contentType)) /*(cmbRegion.Text == "ALL" || item.Region.Contains(cmbRegion.Text)))*/ itms.Add(item);
-
+                if ((dirty == false) && ContainsCmbBox(cmbRegion, item.Region) &&
+                    ContainsCmbBox(cmbType, item.contentType)
+                ) /*(cmbRegion.Text == "ALL" || item.Region.Contains(cmbRegion.Text)))#1# itms.Add(item);
             }
 
             RefreshList(itms);
-
+*/
         }
 
 
+/*
         // Search
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
-
             updateSearch();
-
         }
 
-        bool ContainsCmbBox(PresentationControls.CheckBoxComboBox chkbcmb, string item)
+        private bool ContainsCmbBox(PresentationControls.CheckBoxComboBox chkbcmb, string item)
         {
             foreach (var itm in chkbcmb.CheckBoxItems)
             {
                 if (itm.Checked && item.Contains(itm.Text))
                     return true;
             }
+
             return false;
         }
 
         // Browse
         private void rbnGames_CheckedChanged(object sender, EventArgs e)
         {
-
             downloadAllToolStripMenuItem.Enabled = rbnGames.Checked;
 
             if (rbnGames.Checked)
@@ -553,9 +549,10 @@ namespace NPS
         // Download
         private void btnDownload_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(Settings.Instance.downloadDir) || string.IsNullOrEmpty(Settings.Instance.pkgPath))
+            if (string.IsNullOrEmpty(Settings.Instance.DownloadDir) || string.IsNullOrEmpty(Settings.Instance.PkgPath))
             {
-                MessageBox.Show("You don't have a proper configuration.", "Whoops!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("You don't have a proper configuration.", "Whoops!", MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
                 Options o = new Options(this);
                 o.ShowDialog();
                 return;
@@ -615,7 +612,6 @@ namespace NPS
 
             foreach (var a in toDownload)
             {
-
                 bool contains = false;
                 foreach (var d in downloads)
                     if (d.currentDownload == a)
@@ -629,7 +625,8 @@ namespace NPS
                     if (a.IsDLC)
                     {
                         var gamesDb = GetDatabase();
-                        var result = gamesDb.FirstOrDefault(i => i.TitleId.StartsWith(a.TitleId.Substring(0, 9)))?.TitleName;
+                        var result = gamesDb.FirstOrDefault(i => i.TitleId.StartsWith(a.TitleId.Substring(0, 9)))
+                            ?.TitleName;
                         a.ParentGameTitle = result ?? string.Empty;
                     }
 
@@ -660,7 +657,8 @@ namespace NPS
                         lb_ps3licenseType.BackColor = Color.LawnGreen;
                         lb_ps3licenseType.Text = "RAP NOT REQUIRED, use ReActPSN/PSNPatch";
                     }
-                    else if (itm.zRif.ToLower().Contains("UNLOCK/LICENSE BY DLC".ToLower())) lb_ps3licenseType.Text = "UNLOCK BY DLC";
+                    else if (itm.zRif.ToLower().Contains("UNLOCK/LICENSE BY DLC".ToLower()))
+                        lb_ps3licenseType.Text = "UNLOCK BY DLC";
                     else lb_ps3licenseType.Text = "";
                 }
                 else
@@ -676,7 +674,8 @@ namespace NPS
                 currentOrderInverted = !currentOrderInverted;
             else
             {
-                currentOrderColumn = e.Column; currentOrderInverted = false;
+                currentOrderColumn = e.Column;
+                currentOrderInverted = false;
             }
 
             this.lstTitles.ListViewItemSorter = new ListViewItemComparer(currentOrderColumn, currentOrderInverted);
@@ -698,10 +697,8 @@ namespace NPS
 
         private void downloadAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
             btnDownload_Click(null, null);
             downloadAllDlcsToolStripMenuItem_Click(null, null);
-
         }
 
         // lstTitles Menu Strip
@@ -717,14 +714,12 @@ namespace NPS
                 txtSearch.Text = t.TitleId;
                 rbnAll.Checked = true;
             }
-
         }
 
         private void downloadAllDlcsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             foreach (ListViewItem itm in lstTitles.SelectedItems)
             {
-
                 var parrent = (itm.Tag as Item);
 
                 foreach (var a in parrent.DlcItm)
@@ -844,10 +839,9 @@ namespace NPS
                     if (dw.currentDownload.ItsCompPack)
                         workingCompPack++;
                 }
-
             }
 
-            if (workingThreads < Settings.Instance.simultaneousDl)
+            if (workingThreads < Settings.Instance.SimultaneousDl)
             {
                 foreach (var dw in downloads)
                 {
@@ -865,8 +859,8 @@ namespace NPS
             }
         }
 
-        CancellationTokenSource tokenSource = new CancellationTokenSource();
-        Item previousSelectedItem = null;
+        private CancellationTokenSource tokenSource = new CancellationTokenSource();
+        private Item previousSelectedItem = null;
 
         private void timer2_Tick(object sender, EventArgs e)
         {
@@ -887,7 +881,6 @@ namespace NPS
                 foreach (var ren in NPCache.I.renasceneCache)
                 {
                     if (itm.Equals(ren.itm)) myRena = ren;
-
                 }
 
                 Task.Run(() =>
@@ -899,7 +892,6 @@ namespace NPS
                         if (!NPCache.I.renasceneCache.Contains(myRena))
                         {
                             NPCache.I.renasceneCache.Add(myRena);
-
                         }
 
                         Invoke(new Action(() =>
@@ -907,10 +899,11 @@ namespace NPS
                             //  ptbCover.Image = myRena.image;
                             ptbCover.LoadAsync(myRena.imgUrl);
                             label5.Text = myRena.ToString();
-                            lnkOpenRenaScene.Tag = "https://www.google.com/search?safe=off&source=lnms&tbm=isch&sa=X&biw=785&bih=698&q=" + itm.TitleName + "%20" + itm.contentType;// r.url;
+                            lnkOpenRenaScene.Tag =
+                                "https://www.google.com/search?safe=off&source=lnms&tbm=isch&sa=X&biw=785&bih=698&q=" +
+                                itm.TitleName + "%20" + itm.contentType; // r.url;
                             lnkOpenRenaScene.Visible = true;
                         }));
-
                     }
                     else
                     {
@@ -920,7 +913,6 @@ namespace NPS
                             label5.Text = "";
                             lnkOpenRenaScene.Visible = false;
                         }));
-
                     }
                 }, tokenSource.Token);
             }
@@ -973,12 +965,10 @@ namespace NPS
 
         private void cmbType_SelectedIndexChanged(object sender, EventArgs e)
         {
-
         }
 
         private void splitContainer1_Panel1_Paint(object sender, PaintEventArgs e)
         {
-
         }
 
         private void button5_Click(object sender, EventArgs e)
@@ -991,7 +981,6 @@ namespace NPS
             {
                 System.Diagnostics.Process.Start("explorer.exe", "/select, " + itm.Pkg);
             }
-
         }
 
         private void ts_changeLog_Click(object sender, EventArgs e)
@@ -1023,7 +1012,7 @@ namespace NPS
 
         private void checkForPatchesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(Settings.Instance.HMACKey))
+            if (string.IsNullOrEmpty(Settings.Instance.HmacKey))
             {
                 MessageBox.Show("No hmackey");
                 return;
@@ -1040,98 +1029,73 @@ namespace NPS
             });
 
             gp.AskForUpdate();
-
-
         }
 
         private void toggleDownloadedToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
             if (lstTitles.SelectedItems.Count == 0) return;
 
             for (int i = 0; i < lstTitles.SelectedItems.Count; i++)
             {
-
-                if (Settings.Instance.history.completedDownloading.Contains(lstTitles.SelectedItems[i].Tag as Item))
+                if (Settings.Instance.HistoryInstance.completedDownloading.Contains(
+                    lstTitles.SelectedItems[i].Tag as Item))
 
                 {
-
                     //lstTitles.SelectedItems[i].BackColor = ColorTranslator.FromHtml("#FFFFFF");
-                    Settings.Instance.history.completedDownloading.Remove(lstTitles.SelectedItems[i].Tag as Item);
-
-
+                    Settings.Instance.HistoryInstance.completedDownloading.Remove(
+                        lstTitles.SelectedItems[i].Tag as Item);
                 }
                 else
                 {
-
                     //lstTitles.SelectedItems[i].BackColor = ColorTranslator.FromHtml("#B7FF7C");
-                    Settings.Instance.history.completedDownloading.Add(lstTitles.SelectedItems[i].Tag as Item);
-
+                    Settings.Instance.HistoryInstance.completedDownloading.Add(lstTitles.SelectedItems[i].Tag as Item);
                 }
-
             }
 
             updateSearch();
-
         }
 
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
-
         }
 
         private void splList_Panel2_Paint(object sender, PaintEventArgs e)
         {
-
         }
 
 
         private void chkHideDownloaded_CheckedChanged(object sender, EventArgs e)
         {
-
-
-
         }
 
         private void chkUnless_CheckedChanged(object sender, EventArgs e)
         {
-
             updateSearch();
-
         }
 
         private void lblUnless_Click(object sender, EventArgs e)
         {
-
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-
         }
 
         private void rbnDownloaded_CheckedChanged(object sender, EventArgs e)
         {
-
             updateSearch();
-
         }
 
         private void rbnUndownloaded_CheckedChanged(object sender, EventArgs e)
         {
-
             chkUnless.Enabled = rbnUndownloaded.Checked;
             updateSearch();
-
         }
 
         private void rbnAll_CheckedChanged(object sender, EventArgs e)
         {
-
             updateSearch();
-
         }
-
 
 
         private void libraryToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1142,7 +1106,7 @@ namespace NPS
 
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(Settings.Instance.compPackUrl))
+            if (string.IsNullOrEmpty(Settings.Instance.CompPackUrl))
             {
                 MessageBox.Show("No CompPack url");
                 return;
@@ -1162,9 +1126,27 @@ namespace NPS
             });
             cp.ShowDialog();
         }
+*/
+
+        // ReSharper disable InconsistentNaming
+        private MenuItem DownloadUpdateMenuItem;
+        private DataGrid DownloadStatusList;
+        private MenuItem OptionsMenuItem;
+        // ReSharper restore InconsistentNaming
+
+        private void InitializeComponent()
+        {
+            AvaloniaXamlLoader.Load(this);
+
+            DownloadUpdateMenuItem = this.Find<MenuItem>("DownloadUpdateMenuItem");
+            DownloadStatusList = this.Find<DataGrid>("DownloadStatusList");
+            OptionsMenuItem = this.Find<MenuItem>("OptionsMenuItem");
+            OptionsMenuItem.Command = ReactiveCommand.Create(optionsToolStripMenuItem_Click);
+        }
     }
 
-    class Release
+
+    internal class Release
     {
         public string version = "";
         public string url = "";
@@ -1172,7 +1154,7 @@ namespace NPS
     }
 
 
-    enum DatabaseType
+    internal enum DatabaseType
     {
         // PSV
         Vita,

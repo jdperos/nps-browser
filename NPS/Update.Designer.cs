@@ -1,4 +1,4 @@
-﻿namespace NPS
+﻿/*namespace NPS
 {
     partial class GamePatches
     {
@@ -88,4 +88,4 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
     }
-}
+}*/

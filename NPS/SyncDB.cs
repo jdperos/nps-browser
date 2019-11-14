@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -13,8 +14,8 @@ namespace NPS
 {
     public partial class SyncDB : Form
     {
-        List<Item> dlcsDbs = new List<Item>(), gamesDbs = new List<Item>();
-        int dbCounter = 0;//17
+        private List<Item> dlcsDbs = new List<Item>(), gamesDbs = new List<Item>();
+        private int dbCounter = 0;//17
 
         public SyncDB()
         {
@@ -29,76 +30,76 @@ namespace NPS
         public void Sync(Action<List<Item>> result)
         {
             this.TopMost = true;
-            LoadDatabase(Settings.Instance.PSVUpdateUri, (psvupd) =>
+            LoadDatabase(Settings.Instance.PsvUpdateUri, (psvupd) =>
             {
 
                 //  updatesDbs.AddRange(psvupd);
 
-                LoadDatabase(Settings.Instance.PS4UpdateUri, (ps4upd) =>
+                LoadDatabase(Settings.Instance.Ps4UpdateUri, (ps4upd) =>
                 {
                     //  updatesDbs.AddRange(ps4upd);
 
                     // Theme DBs
-                    LoadDatabase(Settings.Instance.PSVThemeUri, (psvthm) =>
+                    LoadDatabase(Settings.Instance.PsvThemeUri, (psvthm) =>
                     {
                         gamesDbs.AddRange(psvthm);
 
-                        LoadDatabase(Settings.Instance.PSPThemeUri, (pspthm) =>
+                        LoadDatabase(Settings.Instance.PspThemeUri, (pspthm) =>
                         {
                             //    themesDbs.AddRange(pspthm);
 
-                            LoadDatabase(Settings.Instance.PS3ThemeUri, (ps3thm) =>
+                            LoadDatabase(Settings.Instance.Ps3ThemeUri, (ps3thm) =>
                             {
                                 //    themesDbs.AddRange(ps3thm);
 
-                                LoadDatabase(Settings.Instance.PS4ThemeUri, (ps4thm) =>
+                                LoadDatabase(Settings.Instance.Ps4ThemeUri, (ps4thm) =>
                                 {
                                     //      themesDbs.AddRange(ps4thm);
 
                                     // DLC DBs
-                                    LoadDatabase(Settings.Instance.PSVDLCUri, (db) =>
+                                    LoadDatabase(Settings.Instance.PsvDlcUri, (db) =>
                                     {
                                         dlcsDbs.AddRange(db);
 
-                                        LoadDatabase(Settings.Instance.PSPDLCUri, (pspdlc) =>
+                                        LoadDatabase(Settings.Instance.PspDlcUri, (pspdlc) =>
                                         {
                                             dlcsDbs.AddRange(pspdlc);
 
-                                            LoadDatabase(Settings.Instance.PS3DLCUri, (ps3dlc) =>
+                                            LoadDatabase(Settings.Instance.Ps3DlcUri, (ps3dlc) =>
                                             {
                                                 dlcsDbs.AddRange(ps3dlc);
 
-                                                LoadDatabase(Settings.Instance.PS4DLCUri, (ps4dlc) =>
+                                                LoadDatabase(Settings.Instance.Ps4DlcUri, (ps4dlc) =>
                                                 {
                                                     dlcsDbs.AddRange(ps4dlc);
 
                                                     // Avatar DBs
-                                                    LoadDatabase(Settings.Instance.PS3AvatarUri, (ps3avatar) =>
+                                                    LoadDatabase(Settings.Instance.Ps3AvatarUri, (ps3avatar) =>
                                                     {
                                                         // avatarsDbs.AddRange(ps3avatar);
 
                                                         // Game DBs
-                                                        LoadDatabase(Settings.Instance.PSVUri, (vita) =>
+                                                        LoadDatabase(Settings.Instance.PsvUri, (vita) =>
                                                         {
                                                             gamesDbs.AddRange(vita);
 
-                                                            LoadDatabase(Settings.Instance.PSMUri, (psm) =>
+                                                            LoadDatabase(Settings.Instance.PsmUri, (psm) =>
                                                             {
                                                                 gamesDbs.AddRange(psm);
 
-                                                                LoadDatabase(Settings.Instance.PSXUri, (psx) =>
+                                                                LoadDatabase(Settings.Instance.PsxUri, (psx) =>
                                                                 {
                                                                     gamesDbs.AddRange(psx);
 
-                                                                    LoadDatabase(Settings.Instance.PSPUri, (psp) =>
+                                                                    LoadDatabase(Settings.Instance.PspUri, (psp) =>
                                                                     {
                                                                         gamesDbs.AddRange(psp);
 
-                                                                        LoadDatabase(Settings.Instance.PS3Uri, (ps3) =>
+                                                                        LoadDatabase(Settings.Instance.Ps3Uri, (ps3) =>
                                                                         {
                                                                             gamesDbs.AddRange(ps3);
 
-                                                                            LoadDatabase(Settings.Instance.PS4Uri, (ps4) =>
+                                                                            LoadDatabase(Settings.Instance.Ps4Uri, (ps4) =>
                                                                             {
                                                                                 gamesDbs.AddRange(ps4);
                                                                                 gamesDbs.AddRange(dlcsDbs);
@@ -150,7 +151,7 @@ namespace NPS
                     {
                         WebClient wc = new WebClient();
                         wc.Encoding = System.Text.Encoding.UTF8;
-                        wc.Proxy = Settings.Instance.proxy;
+                        wc.Proxy = Settings.Instance.Proxy;
                         wc.DownloadProgressChanged += Wc_DownloadProgressChanged;
                         string content = wc.DownloadStringTaskAsync(new Uri(path)).Result;
                         wc.Dispose();
@@ -371,3 +372,4 @@ namespace NPS
         }
     }
 }
+*/

@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.IO;
 using System.Net;
+using Newtonsoft.Json;
 
 namespace NPS.Helpers
 {
@@ -21,7 +22,7 @@ namespace NPS.Helpers
 
                 WebClient wc = new WebClient();
                 wc.Encoding = System.Text.Encoding.UTF8;
-                wc.Proxy = Settings.Instance.proxy;
+                wc.Proxy = Settings.Instance.Proxy;
 
                 var region = "";
                 switch (itm.Region)
@@ -40,7 +41,7 @@ namespace NPS.Helpers
                 {
                     content = wc.DownloadString(new Uri("https://store.playstation.com/chihiro-api/viewfinder/" + region + "/19/" + itm.ContentId));
 
-                    var contentJson = SimpleJson.SimpleJson.DeserializeObject<PSNJson>(content);
+                    var contentJson = JsonConvert.DeserializeObject<PSNJson>(content);
                     this.imgUrl = contentJson.cover;
                 }
                 catch
@@ -83,7 +84,7 @@ namespace NPS.Helpers
                 //{
                 //    genre = ExtractString(content, "<td class=\"infLeftTd\">Genre</td>", "</tr>");
                 //    genre = ExtractString(genre, "<td class=\"infRightTd\">", "</td>");
-                //    genre = genre.Replace("Â»", "/");
+                //    genre = genre.Replace("Ã‚Â»", "/");
 
 
                 //    language = ExtractString(content, "<td class=\"infLeftTd\">Language</td>", "</tr>");
@@ -106,7 +107,7 @@ namespace NPS.Helpers
             try
             {
                 var webRequest = HttpWebRequest.Create(itm.pkg);
-                webRequest.Proxy = Settings.Instance.proxy;
+                webRequest.Proxy = Settings.Instance.Proxy;
                 webRequest.Method = "HEAD";
 
                 using (var webResponse = webRequest.GetResponse())
@@ -148,12 +149,12 @@ Developer: {3}", this.genre, this.language, this.publish, this.developer, this.s
         }
 
 
-        string SafeTitle(string title)
+        private string SafeTitle(string title)
         {
             return title.Replace("(DLC)", "").Replace(" ", "");
         }
 
-        string ExtractString(string s, string start, string end)
+        private string ExtractString(string s, string start, string end)
         {
             int startIndex = s.IndexOf(start) + start.Length;
             int endIndex = s.IndexOf(end, startIndex);

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 [System.Serializable]
-public class Source
+internal class Source
 {
     public string uri;
     public DatabaseType type;

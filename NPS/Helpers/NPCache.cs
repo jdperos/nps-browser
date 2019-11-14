@@ -23,13 +23,13 @@ public class NPCache
 
     public bool IsCacheIsInvalid { get { return _cacheInvalid || this.UpdateDate > System.DateTime.Now.AddDays(-4); } }
 
-    static NPCache _i;
+    private static NPCache _i;
     public const int ver = 1;
     public System.DateTime UpdateDate;
     public List<NPS.Item> localDatabase = new List<NPS.Item>();
     public List<string> regions = new List<string>(), types = new List<string>();
     public List<Renascene> renasceneCache = new List<Renascene>();
-    static string path = "nps.cache";
+    private static string path = "nps.cache";
 
     public static void Load()
     {

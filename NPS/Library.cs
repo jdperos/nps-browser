@@ -1,4 +1,5 @@
-﻿using System;
+/*
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -17,8 +18,7 @@ namespace NPS
 {
     public partial class Library : Form
     {
-
-        List<Item> db;
+        private List<Item> db;
 
         public Library(List<Item> db)
         {
@@ -30,26 +30,26 @@ namespace NPS
         {
             listView1.Items.Clear();
 
-            label1.Text = Settings.Instance.downloadDir;
+            label1.Text = Settings.Instance.DownloadDir;
 
             string[] apps = new string[0];
             string[] dlcs = new string[0];
-            string[] files = Directory.GetFiles(Settings.Instance.downloadDir, "*.pkg");
+            string[] files = Directory.GetFiles(Settings.Instance.DownloadDir, "*.pkg");
 
-            if (Directory.Exists(Settings.Instance.downloadDir + "\\packages"))
+            if (Directory.Exists(Settings.Instance.DownloadDir + "\\packages"))
             {
                 var lst = files.ToList();
-                lst.AddRange(Directory.GetFiles(Settings.Instance.downloadDir + "\\packages", "*.pkg"));
+                lst.AddRange(Directory.GetFiles(Settings.Instance.DownloadDir + "\\packages", "*.pkg"));
                 files = lst.ToArray();
             }
 
-            if (Directory.Exists(Settings.Instance.downloadDir + "\\app"))
+            if (Directory.Exists(Settings.Instance.DownloadDir + "\\app"))
             {
-                apps = Directory.GetDirectories(Settings.Instance.downloadDir + "\\app");
+                apps = Directory.GetDirectories(Settings.Instance.DownloadDir + "\\app");
             }
-            if (Directory.Exists(Settings.Instance.downloadDir + "\\addcont"))
+            if (Directory.Exists(Settings.Instance.DownloadDir + "\\addcont"))
             {
-                dlcs = Directory.GetDirectories(Settings.Instance.downloadDir + "\\addcont");
+                dlcs = Directory.GetDirectories(Settings.Instance.DownloadDir + "\\addcont");
             }
 
             List<string> imagesToLoad = new List<string>();
@@ -177,7 +177,7 @@ namespace NPS
                 foreach (string url in imagesToLoad)
                 {
                     WebClient wc = new WebClient();
-                    wc.Proxy = Settings.Instance.proxy;
+                    wc.Proxy = Settings.Instance.Proxy;
                     wc.Encoding = Encoding.UTF8;
                     var img = wc.DownloadData(url);
                     using (var ms = new MemoryStream(img))
@@ -265,7 +265,7 @@ namespace NPS
                 return;
             }
 
-            if (itm.itm.ItsPS3 && itm.path.ToLower().Contains("packages")) File.Move(itm.path, Settings.Instance.downloadDir + Path.DirectorySeparatorChar + Path.GetFileName(itm.path));
+            if (itm.itm.ItsPS3 && itm.path.ToLower().Contains("packages")) File.Move(itm.path, Settings.Instance.DownloadDir + Path.DirectorySeparatorChar + Path.GetFileName(itm.path));
 
             DownloadWorker dw = new DownloadWorker(itm.itm, this);
             dw.Start();
@@ -285,10 +285,11 @@ namespace NPS
         }
     }
 
-    class LibraryItem
+    internal class LibraryItem
     {
         public Item itm;
         public bool isPkg = false;
         public string path;
     }
 }
+*/

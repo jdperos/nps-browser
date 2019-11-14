@@ -1,24 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+using Avalonia.Controls;
 
 namespace NPS
 {
-    public partial class CompPack : Form
+    public partial class CompPack : Window
     {
-        NPSBrowser mainForm;
-        Item item;
         public static bool compPackChanged = false;
-        static List<CompPackItem> compPackList = null;
+/*
+        private NPSBrowser mainForm;
+        private Item item;
+        private static List<CompPackItem> compPackList = null;
 
-        Action<Item[]> finalresult;
+        private Action<Item[]> finalresult;
 
         public CompPack(NPSBrowser mainForm, Item item, Action<Item[]> result)
         {
@@ -35,10 +31,10 @@ namespace NPS
                 if (compPackList == null || compPackChanged)
                 {
                     compPackChanged = false;
-                    compPackList = LoadCompPacks(Settings.Instance.compPackUrl);
+                    compPackList = LoadCompPacks(Settings.Instance.CompPackUrl);
                     //   Settings.Instance.compPackPatchUrl = "";
-                    if (!string.IsNullOrEmpty(Settings.Instance.compPackPatchUrl))
-                        compPackList.AddRange(LoadCompPacks(Settings.Instance.compPackPatchUrl));
+                    if (!string.IsNullOrEmpty(Settings.Instance.CompPackPatchUrl))
+                        compPackList.AddRange(LoadCompPacks(Settings.Instance.CompPackPatchUrl));
                 }
 
                 List<CompPackItem> result = new List<CompPackItem>();
@@ -64,11 +60,11 @@ namespace NPS
 
         }
 
-        List<CompPackItem> LoadCompPacks(string url)
+        private List<CompPackItem> LoadCompPacks(string url)
         {
             List<CompPackItem> list = new List<CompPackItem>();
             WebClient wc = new WebClient();
-            wc.Proxy = Settings.Instance.proxy;
+            wc.Proxy = Settings.Instance.Proxy;
             wc.Encoding = Encoding.UTF8;
             string content = wc.DownloadString(new Uri(url));
             wc.Dispose();
@@ -110,9 +106,10 @@ namespace NPS
             //DownloadWorker dw = new DownloadWorker(itm, mainForm);
             //dw.Start();
         }
+*/
     }
 
-    class CompPackItem
+    internal class CompPackItem
     {
 
         public CompPackItem(string unparsedRow)
@@ -142,7 +139,7 @@ namespace NPS
             i.TitleId = this.titleId;
 
             i.TitleName = this.title + " CompPack_" + this.ver; ;
-            var urlArr = Settings.Instance.compPackUrl.Split('/');
+            var urlArr = Settings.Instance.CompPackUrl.Split('/');
 
             string url = "";
             for (int c = 0; c < urlArr.Length - 1; c++)
@@ -158,3 +155,4 @@ namespace NPS
         }
     }
 }
+

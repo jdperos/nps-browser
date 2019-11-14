@@ -1,10 +1,11 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections;
 using System.Windows.Forms;
 
 namespace NPS
 {
-    class ListViewItemComparer : IComparer
+    internal class ListViewItemComparer : IComparer
     {
         private int col;
         private bool invertOrder = false;
@@ -61,3 +62,4 @@ namespace NPS
 
 
 }
+*/

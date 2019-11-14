@@ -1,136 +1,78 @@
-﻿using Microsoft.Win32;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 
-[System.Serializable]
+[Serializable]
 public class Settings
 {
-
-    static Settings _i;
-    static string path = "npsSettings.dat";
+    private const string CONFIG_PATH = "npsSettings.dat";
+    private static readonly Lazy<Settings> _instance = new Lazy<Settings>(Load);
 
     // Settings
-    public string downloadDir, pkgPath, pkgParams = "-x {pkgFile} \"{zRifKey}\"";
-    public bool deleteAfterUnpack = false;
-    public int simultaneousDl = 2;
+    public string PkgPath { get; set; }
+    public string PkgParams { get; set; } = "-x {pkgFile} \"{zRifKey}\"";
+    public bool DeleteAfterUnpack { get; set; } = false;
+    public int SimultaneousDl { get; set; } = 2;
 
     // Game URIs
-    public string PSVUri, PSMUri, PSXUri, PSPUri, PS3Uri, PS4Uri;
+    public string PsvUri { get; set; }
+    public string PsmUri { get; set; }
+    public string PsxUri { get; set; }
+    public string PspUri { get; set; }
+    public string Ps3Uri { get; set; }
+    public string Ps4Uri { get; set; }
 
     // Avatar URIs
-    public string PS3AvatarUri;
+    public string Ps3AvatarUri { get; set; }
 
     // DLC URIs
-    public string PSVDLCUri, PSPDLCUri, PS3DLCUri, PS4DLCUri;
+    public string PsvDlcUri { get; set; }
+    public string PspDlcUri { get; set; }
+    public string Ps3DlcUri { get; set; }
+    public string Ps4DlcUri { get; set; }
 
     // Theme URIs
-    public string PSVThemeUri, PSPThemeUri, PS3ThemeUri, PS4ThemeUri;
+    public string PsvThemeUri { get; set; }
+    public string PspThemeUri { get; set; }
+    public string Ps3ThemeUri { get; set; }
+    public string Ps4ThemeUri { get; set; }
 
-    public string HMACKey = "";
+    public string HmacKey { get; set; } = "";
+
     // Update URIs
-    public string PSVUpdateUri, PS4UpdateUri;
-    public List<string> selectedRegions = new List<string>(), selectedTypes = new List<string>();
+    public string PsvUpdateUri { get; set; }
+    public string Ps4UpdateUri { get; set; }
 
-    public WebProxy proxy;
-    public History history = new History();
-    public string compPackUrl = null, compPackPatchUrl = null;
+    public List<string> SelectedRegions { get; } = new List<string>();
+    public List<string> SelectedTypes { get; } = new List<string>();
 
-    public static Settings Instance
+    public WebProxy Proxy { get; set; }
+    public History HistoryInstance { get; } = new History();
+    public string CompPackUrl { get; set; }
+    public string CompPackPatchUrl { get; set; }
+
+    public static Settings Instance => _instance.Value;
+
+    public string DownloadDir { get; set; }
+
+    public static Settings Load()
     {
-        get
+        if (File.Exists(CONFIG_PATH))
         {
-            if (_i == null)
-            {
-                Load();
-            }
-            return _i;
-        }
-    }
-
-    public static void Load()
-    {
-        if (System.IO.File.Exists(path))
-        {
-            var stream = File.OpenRead(path);
+            using var stream = File.OpenRead(CONFIG_PATH);
             var formatter = new BinaryFormatter();
-            _i = (Settings)formatter.Deserialize(stream);
-            stream.Close();
+            return (Settings) formatter.Deserialize(stream);
         }
-        else
-        {
-            _i = ImportOldSettings();
-            if (File.Exists("history.dat"))
-            {
-                _i.history = ImportOldHistory();
-                File.Delete("history.dat");
-            }
-        }
+
+        return new Settings();
     }
 
     public void Save()
     {
-        FileStream stream = File.Create(path);
+        using var stream = File.Create(CONFIG_PATH);
         var formatter = new BinaryFormatter();
         formatter.Serialize(stream, this);
-        stream.Close();
     }
-
-    static History ImportOldHistory()
-    {
-        var stream = File.OpenRead("history.dat");
-        var formatter = new BinaryFormatter();
-        History h = (History)formatter.Deserialize(stream);
-        stream.Close();
-        return h;
-    }
-
-    static Settings ImportOldSettings()
-    {
-        Settings s = new Settings();
-
-        if (System.Type.GetType("Mono.Runtime") == null)
-        {
-            string keyName = Path.Combine("HKEY_CURRENT_USER", "SOFTWARE", "NoPayStationBrowser");
-
-            s.downloadDir = Registry.GetValue(keyName, "downloadDir", "")?.ToString();
-            s.pkgPath = Registry.GetValue(keyName, "pkgPath", "")?.ToString();
-            s.pkgParams = Registry.GetValue(keyName, "pkgParams", null)?.ToString();
-            if (s.pkgParams == null) s.pkgParams = "-x {pkgFile} \"{zRifKey}\"";
-            string deleteAfterUnpackString = Registry.GetValue(keyName, "deleteAfterUnpack", false)?.ToString();
-            if (!string.IsNullOrEmpty(deleteAfterUnpackString))
-                bool.TryParse(deleteAfterUnpackString, out s.deleteAfterUnpack);
-            else s.deleteAfterUnpack = true;
-            string simultanesulString = Registry.GetValue(keyName, "simultaneousDl", 2)?.ToString();
-            if (!string.IsNullOrEmpty(simultanesulString))
-                int.TryParse(simultanesulString, out s.simultaneousDl);
-            else s.simultaneousDl = 2;
-            s.PSVUri = Registry.GetValue(keyName, "GamesUri", "")?.ToString();
-            s.PSMUri = Registry.GetValue(keyName, "PSMUri", "")?.ToString();
-            s.PSXUri = Registry.GetValue(keyName, "PSXUri", "")?.ToString();
-            s.PSPUri = Registry.GetValue(keyName, "PSPUri", "")?.ToString();
-            s.PS3Uri = Registry.GetValue(keyName, "PS3Uri", "")?.ToString();
-            s.PS4Uri = Registry.GetValue(keyName, "PS4Uri", "")?.ToString();
-            s.PS3AvatarUri = Registry.GetValue(keyName, "PS3AvatarUri", "")?.ToString();
-            s.PSVDLCUri = Registry.GetValue(keyName, "DLCUri", "")?.ToString();
-            s.PSPDLCUri = Registry.GetValue(keyName, "PSPDLCUri", "")?.ToString();
-            s.PS3DLCUri = Registry.GetValue(keyName, "PS3DLCUri", "")?.ToString();
-            s.PS4DLCUri = Registry.GetValue(keyName, "PS4DLCUri", "")?.ToString();
-            s.PSVThemeUri = Registry.GetValue(keyName, "ThemeUri", "")?.ToString();
-            s.PSPThemeUri = Registry.GetValue(keyName, "PSPThemeUri", "")?.ToString();
-            s.PS3ThemeUri = Registry.GetValue(keyName, "PS3ThemeUri", "")?.ToString();
-            s.PS4ThemeUri = Registry.GetValue(keyName, "PS4ThemeUri", "")?.ToString();
-            s.PSVUpdateUri = Registry.GetValue(keyName, "UpdateUri", "")?.ToString();
-            s.PS4UpdateUri = Registry.GetValue(keyName, "PS4UpdateUri", "")?.ToString();
-        }
-
-        return s;
-    }
-
-
 }
-
-
-
-

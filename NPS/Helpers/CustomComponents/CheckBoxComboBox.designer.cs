@@ -1,4 +1,5 @@
-﻿namespace PresentationControls
+﻿/*
+namespace PresentationControls
 {
     partial class CheckBoxComboBox
     {
@@ -34,3 +35,4 @@
         #endregion
     }
 }
+*/

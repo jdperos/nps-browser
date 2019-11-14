@@ -1,4 +1,5 @@
-﻿namespace PresentationControls
+﻿/*
+namespace PresentationControls
 {
     partial class Popup
     {
@@ -43,3 +44,4 @@
         #endregion
     }
 }
+*/

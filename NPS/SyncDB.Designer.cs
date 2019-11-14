@@ -1,4 +1,4 @@
-﻿namespace NPS
+﻿/*namespace NPS
 {
     partial class SyncDB
     {
@@ -57,4 +57,4 @@
 
         private System.Windows.Forms.ProgressBar progressBar1;
     }
-}
+}*/

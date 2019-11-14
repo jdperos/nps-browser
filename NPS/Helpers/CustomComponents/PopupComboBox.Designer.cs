@@ -1,4 +1,5 @@
-﻿namespace PresentationControls
+﻿/*
+namespace PresentationControls
 {
     partial class PopupComboBox
     {
@@ -46,3 +47,4 @@
         #endregion
     }
 }
+*/

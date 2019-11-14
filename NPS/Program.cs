@@ -1,20 +1,36 @@
-using System;
-using System.Net;
-using System.Windows.Forms;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Logging.Serilog;
+using Avalonia.ReactiveUI;
 
 namespace NPS
 {
-    static class Program
+    internal static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        [STAThread]
-        static void Main(string[] args)
+        // Initialization code. Don't use any Avalonia, third-party APIs or any
+        // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
+        // yet and stuff might break.
+        public static void Main(string[] args)
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new NPSBrowser());
+            BuildAvaloniaApp().Start(AppMain, args);
+        }
+
+        // Avalonia configuration, don't remove; also used by visual designer.
+        private static AppBuilder BuildAvaloniaApp()
+            => AppBuilder.Configure<App>()
+                .UsePlatformDetect()
+                .LogToDebug()
+                .UseReactiveUI();
+
+        // Your application's entry point. Here you can initialize your MVVM framework, DI
+        // container, etc.
+        private static void AppMain(Application app, string[] args)
+        {
+            var window = new NpsBrowser();
+
+            window.Start();
+
+            app.Run(window);
         }
     }
 }

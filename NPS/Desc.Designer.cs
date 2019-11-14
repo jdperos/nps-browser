@@ -1,4 +1,4 @@
-﻿namespace NPS
+﻿/*namespace NPS
 {
     partial class Desc
     {
@@ -138,4 +138,4 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.PictureBox pb_status;
     }
-}
+}*/
