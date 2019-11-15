@@ -35,7 +35,7 @@
                 <MenuItem Name="UpdateChangelogMenuItem" Header="_Changelog" />
             </MenuItem>
             <MenuItem Header="Description panel" />
-            <MenuItem Header="Library" />
+            <MenuItem Name="libraryToolStripMenuItem" Header="_Library" />
         </Menu>
 
         <!-- Downloads list -->

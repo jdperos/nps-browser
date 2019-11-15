@@ -1,0 +1,47 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        Width="1000" Height="650"
+        x:Class="NPS.Library"
+        Icon="/Assets/Images/8-512.ico"
+        Title="Library"
+        Padding="4">
+
+    <DockPanel>
+        <TextBlock Name="label1" DockPanel.Dock="Top" />
+        <StackPanel DockPanel.Dock="Right">
+            <Button Name="button1">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="/Assets/Images/opened-folder.png" />
+                    <TextBlock Text="Open Directory" />
+                </StackPanel>
+            </Button>
+            <Button Name="button2">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="/Assets/Images/menu-cancel.png" />
+                    <TextBlock Text="Delete" />
+                </StackPanel>
+            </Button>
+            <Button Name="button3" IsEnabled="False">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="/Assets/Images/menu-unpack.png" />
+                    <TextBlock Text="Unpack PKG" />
+                </StackPanel>
+            </Button>
+            <Button Name="button4">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="/Assets/Images/menu-reload.png" />
+                    <TextBlock Text="Refresh" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <DataGrid Name="listView1" IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Width="600" Binding="{Binding Text}" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

@@ -1086,12 +1086,11 @@ namespace NPS
             updateSearch();
         }
 
-        private void libraryToolStripMenuItem_Click(object sender, EventArgs e)
+        private void libraryToolStripMenuItem_Click()
         {
-            /*
-            Library l = new Library(databaseAll);
+            var l = new Library(databaseAll);
+            l.Owner = this;
             l.Show();
-            */
         }
 
         private void toolStripMenuItem1_Click()
@@ -1131,6 +1130,7 @@ namespace NPS
         private MenuItem ExitMenuItem;
         private MenuItem DownloadMenuItem;
         private MenuItem UpdateChangelogMenuItem;
+        private MenuItem libraryToolStripMenuItem;
 
         private RadioButton rbnGames;
         private RadioButton rbnAvatars;
@@ -1186,6 +1186,7 @@ namespace NPS
             ExitMenuItem = this.FindControl<MenuItem>("ExitMenuItem");
             DownloadMenuItem = this.FindControl<MenuItem>("DownloadMenuItem");
             UpdateChangelogMenuItem = this.FindControl<MenuItem>("UpdateChangelogMenuItem");
+            libraryToolStripMenuItem = this.FindControl<MenuItem>("libraryToolStripMenuItem");
 
             rbnGames = this.FindControl<RadioButton>("rbnGames");
             rbnAvatars = this.FindControl<RadioButton>("rbnAvatars");
@@ -1275,6 +1276,7 @@ namespace NPS
             UpdateChangelogMenuItem.Command = ReactiveCommand.Create(changelogToolStripMenuItem_Click);
             ExitMenuItem.Command = ReactiveCommand.Create(exitToolStripMenuItem_Click);
             DownloadMenuItem.Command = ReactiveCommand.Create(downloadUpdateToolStripMenuItem_Click);
+            libraryToolStripMenuItem.Command = ReactiveCommand.Create(libraryToolStripMenuItem_Click);
         }
     }
 
