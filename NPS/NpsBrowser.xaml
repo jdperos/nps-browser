@@ -15,7 +15,7 @@
                         <Image Source="/Assets/Images/menu-options.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="_Sync cache">
+                <MenuItem Name="SyncMenuItem" Header="_Sync cache">
                     <MenuItem.Icon>
                         <Image Source="/Assets/Images/menu-reload.png" />
                     </MenuItem.Icon>
@@ -64,6 +64,5 @@
                 </StackPanel>
             </Button>
         </StackPanel>
-        <Panel />
     </DockPanel>
 </Window>

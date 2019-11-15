@@ -56,10 +56,9 @@ public class NPCache
     }
     public void Save()
     {
-        FileStream stream = File.Create(path);
+        using var stream = File.Create(path);
         var formatter = new BinaryFormatter();
         formatter.Serialize(stream, this);
-        stream.Close();
     }
 
     public NPCache(System.DateTime creationDate)

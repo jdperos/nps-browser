@@ -4,9 +4,7 @@ using System.Globalization;
 using System.Net;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
-using DynamicData.Annotations;
 using NPS.Helpers;
 using ReactiveUI;
 
@@ -116,7 +114,7 @@ namespace NPS
             UpdateSettings(true);
         }
 
-        private void UpdateSettings(bool withStoring)
+        private async void UpdateSettings(bool withStoring)
         {
             needResync = needResync || Settings.Instance.PsvUri != tb_psvuri.Text ||
                          Settings.Instance.PsmUri != tb_psmuri.Text ||
@@ -181,7 +179,10 @@ namespace NPS
             if (withStoring)
             {
                 Settings.Instance.Save();
-                if (needResync) _mainForm.Sync(null);
+                if (needResync)
+                {
+                    await _mainForm.Sync();
+                }
             }
         }
 
@@ -207,15 +208,11 @@ namespace NPS
         }
 
 
-        private void btnSyncNow_Click()
+        private async void btnSyncNow_Click()
         {
-            _mainForm.Sync(() =>
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    lblCacheDate.Text = "Cache date: " + NPCache.I.UpdateDate.ToString();
-                });
-            });
+            await _mainForm.Sync();
+
+            lblCacheDate.Text = "Cache date: " + NPCache.I.UpdateDate.ToString(CultureInfo.CurrentCulture);
         }
 
         private void textBox2_KeyPress()

@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Newtonsoft.Json;
 using NPS.Helpers;
 using ReactiveUI;
@@ -76,7 +77,7 @@ namespace NPS
             LoadAllDatabases(null, null);
         }
 
-        private void LoadAllDatabases(object sender, EventArgs e)
+        private async void LoadAllDatabases(object sender, EventArgs e)
         {
             avatarsDbs.Clear();
             //dlcsDbs.Clear();
@@ -94,38 +95,26 @@ namespace NPS
             }
             else
             {
-                Sync(null);
+                await Sync();
             }
         }
 
-        public void Sync(object sender, EventArgs e)
+        public async Task Sync()
         {
-            Sync(null);
-        }
-
-        public void Sync(Action result)
-        {
-/*
-            SyncDB sync = new SyncDB();
-            sync.Owner = this;
+            var sync = new SyncDB {Owner = this};
             sync.Show();
 
-            sync.Sync((g) =>
-            {
-                databaseAll = g;
-                Invoke(new Action(() =>
-                {
-                    FinalizeDBLoad();
+            var g = await sync.Sync();
 
-                    NPCache.I.localDatabase = databaseAll;
-                    NPCache.I.types = types.ToList();
-                    NPCache.I.regions = regions.ToList();
-                    NPCache.I.Save(DateTime.Now);
-                    if (result != null) result.Invoke();
-                    sync.Close();
-                }));
-            });
-*/
+            databaseAll = g;
+
+            FinalizeDBLoad();
+
+            NPCache.I.localDatabase = databaseAll;
+            NPCache.I.types = types.ToList();
+            NPCache.I.regions = regions.ToList();
+            NPCache.I.Save(DateTime.Now);
+            sync.Close();
         }
 
         private List<Item> GetDatabase(string type = "GAME")
@@ -143,6 +132,7 @@ namespace NPS
         private void FinalizeDBLoad()
         {
 /*
+
             //var tempList = new List<Item>(dlcsDbs);
             //tempList.AddRange(gamesDbs);
             rbnDLC.Enabled = false;
@@ -224,8 +214,7 @@ namespace NPS
 
             cmbRegion.CheckBoxCheckedChanged += txtSearch_TextChanged;
             cmbType.CheckBoxCheckedChanged += txtSearch_TextChanged;
-            txtSearch_TextChanged(null, null);
-*/
+            txtSearch_TextChanged(null, null);*/
         }
 
         private void SetCheckboxState(List<Item> list, int id)
@@ -1131,7 +1120,9 @@ namespace NPS
         // ReSharper disable InconsistentNaming
         private MenuItem DownloadUpdateMenuItem;
         private DataGrid DownloadStatusList;
+
         private MenuItem OptionsMenuItem;
+        private MenuItem SyncMenuItem;
         // ReSharper restore InconsistentNaming
 
         private void InitializeComponent()
@@ -1141,7 +1132,11 @@ namespace NPS
             DownloadUpdateMenuItem = this.Find<MenuItem>("DownloadUpdateMenuItem");
             DownloadStatusList = this.Find<DataGrid>("DownloadStatusList");
             OptionsMenuItem = this.Find<MenuItem>("OptionsMenuItem");
+            SyncMenuItem = this.Find<MenuItem>("SyncMenuItem");
+
+
             OptionsMenuItem.Command = ReactiveCommand.Create(optionsToolStripMenuItem_Click);
+            SyncMenuItem.Command = ReactiveCommand.Create(Sync);
         }
     }
 
