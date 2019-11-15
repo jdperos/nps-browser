@@ -2,18 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Collections;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NPS.Helpers;
@@ -57,6 +61,31 @@ namespace NPS
 
             _timer1.Interval = TimeSpan.FromSeconds(1);
             _timer1.Tick += timer1_Tick;
+
+            // This is necessary to make DataGrid play nicer with context menus.
+            // So that right clicking on the data grid still selects the relevant item.
+            lstTitles.AddHandler(
+                InputElement.PointerPressedEvent,
+                (s, e) =>
+                {
+#pragma warning disable 618
+                    if (e.MouseButton == MouseButton.Right)
+#pragma warning restore 618
+                    {
+                        var row = ((IControl) e.Source).GetSelfAndVisualAncestors()
+                            .OfType<DataGridRow>()
+                            .FirstOrDefault();
+
+                        // Don't change selection if already in the selection.
+                        if (row != null && !lstTitles.SelectedItems.Contains(row.DataContext))
+                        {
+                            lstTitles.SelectedIndex = row.GetIndex();
+                        }
+                    }
+
+                    UpdateTitlesContextMenu();
+                },
+                handledEventsToo: true);
         }
 
         public async void Start()
@@ -367,16 +396,16 @@ namespace NPS
             o.ShowDialog(this);
         }
 
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exitToolStripMenuItem_Click()
         {
             this.Close();
         }
 
-        private void downloadUpdateToolStripMenuItem_Click(object sender, EventArgs e)
+        private void downloadUpdateToolStripMenuItem_Click()
         {
             string url = releases?[0]?.url;
             if (!string.IsNullOrEmpty(url))
-                System.Diagnostics.Process.Start(url);
+                Process.Start(url);
         }
 
         public void updateSearch()
@@ -469,52 +498,52 @@ namespace NPS
             return false;
         }
 
-/*
-        // Browse
-        private void rbnGames_CheckedChanged(object sender, EventArgs e)
-        {
-            downloadAllToolStripMenuItem.Enabled = rbnGames.Checked;
 
-            if (rbnGames.Checked)
+        // Browse
+        private void rbnGames_CheckedChanged()
+        {
+            // downloadAllToolStripMenuItem.Enabled = rbnGames.IsChecked == true;
+
+            if (rbnGames.IsChecked == true)
             {
                 currentDatabase = GetDatabase();
-                txtSearch_TextChanged(null, null);
+                txtSearch_TextChanged();
             }
         }
 
-        private void rbnAvatars_CheckedChanged(object sender, EventArgs e)
+        private void rbnAvatars_CheckedChanged()
         {
-            if (rbnAvatars.Checked)
+            if (rbnAvatars.IsChecked == true)
             {
                 currentDatabase = avatarsDbs;
-                txtSearch_TextChanged(null, null);
+                txtSearch_TextChanged();
             }
         }
 
-        private void rbnDLC_CheckedChanged(object sender, EventArgs e)
+        private void rbnDLC_CheckedChanged()
         {
-            if (rbnDLC.Checked)
+            if (rbnDLC.IsChecked == true)
             {
                 currentDatabase = GetDatabase("DLC");
-                txtSearch_TextChanged(null, null);
+                txtSearch_TextChanged();
             }
         }
 
-        private void rbnThemes_CheckedChanged(object sender, EventArgs e)
+        private void rbnThemes_CheckedChanged()
         {
-            if (rbnThemes.Checked)
+            if (rbnThemes.IsChecked == true)
             {
                 currentDatabase = GetDatabase("THEME");
-                txtSearch_TextChanged(null, null);
+                txtSearch_TextChanged();
             }
         }
 
-        private void rbnUpdates_CheckedChanged(object sender, EventArgs e)
+        private void rbnUpdates_CheckedChanged()
         {
-            if (rbnUpdates.Checked)
+            if (rbnUpdates.IsChecked == true)
             {
                 currentDatabase = updatesDbs;
-                txtSearch_TextChanged(null, null);
+                txtSearch_TextChanged();
             }
         }
 
@@ -535,7 +564,7 @@ namespace NPS
         //        txtSearch_TextChanged(null, null);
         //    }
         //}
-*/
+
         // Download
         private void btnDownload_Click()
         {
@@ -635,6 +664,7 @@ namespace NPS
             System.Diagnostics.Process.Start(lnkOpenRenaScene.Tag.ToString());
         }
 
+
         // lstTitles
         private void lstTitles_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -645,7 +675,7 @@ namespace NPS
                 {
                     if (string.IsNullOrEmpty(itm.zRif))
                     {
-                        lb_ps3licenseType.BackColor = Color.LawnGreen;
+                        lb_ps3licenseType.BackColor = Colors.LawnGreen;
                         lb_ps3licenseType.Text = "RAP NOT REQUIRED, use ReActPSN/PSNPatch";
                     }
                     else if (itm.zRif.ToLower().Contains("UNLOCK/LICENSE BY DLC".ToLower()))
@@ -673,45 +703,34 @@ namespace NPS
             // Call the sort method to manually sort.
             lstTitles.Sort();
         }
+        */
 
-        private void lstTitles_KeyDown(object sender, KeyEventArgs e)
+        private void downloadAllToolStripMenuItem_Click()
         {
-            if (e.KeyCode == Keys.A && e.Control)
-            {
-                //listView1.MultiSelect = true;
-                foreach (ListViewItem item in lstTitles.Items)
-                {
-                    item.Selected = true;
-                }
-            }
-        }
-
-        private void downloadAllToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            btnDownload_Click(null, null);
-            downloadAllDlcsToolStripMenuItem_Click(null, null);
+            btnDownload_Click();
+            downloadAllDlcsToolStripMenuItem_Click();
         }
 
         // lstTitles Menu Strip
-        private void showTitleDlcToolStripMenuItem_Click(object sender, EventArgs e)
+        private void showTitleDlcToolStripMenuItem_Click()
         {
             if (lstTitles.SelectedItems.Count == 0) return;
 
 
-            Item t = (lstTitles.SelectedItems[0].Tag as Item);
+            var t = ((TitleEntry) lstTitles.SelectedItems[0]).Item;
             if (t.DLCs > 0)
             {
-                rbnDLC.Checked = true;
+                rbnDLC.IsChecked = true;
                 txtSearch.Text = t.TitleId;
-                rbnAll.Checked = true;
+                rbnAll.IsChecked = true;
             }
         }
 
-        private void downloadAllDlcsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void downloadAllDlcsToolStripMenuItem_Click()
         {
-            foreach (ListViewItem itm in lstTitles.SelectedItems)
+            foreach (TitleEntry itm in lstTitles.SelectedItems)
             {
-                var parrent = (itm.Tag as Item);
+                var parrent = itm.Item;
 
                 foreach (var a in parrent.DlcItm)
                 {
@@ -726,28 +745,14 @@ namespace NPS
 
                     if (!contains)
                     {
-                        DownloadWorker dw = new DownloadWorker(a, this);
-                        lstDownloadStatus.Items.Add(dw.lvi);
-                        lstDownloadStatus.AddEmbeddedControl(dw.progress, 3, lstDownloadStatus.Items.Count - 1);
+                        var dw = new DownloadWorker(a);
+                        _downloadWorkerItems.Add(dw.lvi);
                         downloads.Add(dw);
                     }
                 }
             }
         }
 
-        // lstDownloadStatus
-        private void lstDownloadStatus_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.A && e.Control)
-            {
-                //listView1.MultiSelect = true;
-                foreach (ListViewItem item in lstDownloadStatus.Items)
-                {
-                    item.Selected = true;
-                }
-            }
-        }
-*/
         private void pauseToolStripMenuItem_Click()
         {
             if (lstDownloadStatus.SelectedItems.Count == 0) return;
@@ -849,6 +854,7 @@ namespace NPS
         private CancellationTokenSource tokenSource = new CancellationTokenSource();
 
         private Item previousSelectedItem = null;
+
 /*
         private void timer2_Tick(object sender, EventArgs e)
         {
@@ -916,62 +922,67 @@ namespace NPS
 
         private void ResumeAllBtnClick()
         {
-            foreach (var itm  in _downloadWorkerItems)
+            foreach (var itm in _downloadWorkerItems)
             {
                 itm.Worker.Resume();
             }
         }
 
-/*
-        private void lstTitles_MouseClick(object sender, MouseEventArgs e)
+        private void UpdateTitlesContextMenu()
         {
-            if (e.Button == MouseButtons.Right)
+            if (lstTitles.SelectedItems.Count <= 0)
             {
-                var a = (sender as ListView);
-                if (a.SelectedItems.Count > 0)
-                {
-                    var itm = (a.SelectedItems[0].Tag as Item);
-                    if (itm.DLCs == 0)
-                    {
-                        showTitleDlcToolStripMenuItem.Enabled = false;
-                        downloadAllDlcsToolStripMenuItem.Enabled = false;
-                    }
-                    else
-                    {
-                        showTitleDlcToolStripMenuItem.Enabled = true;
-                        downloadAllDlcsToolStripMenuItem.Enabled = true;
-                    }
-                }
+                return;
+            }
+
+            var item = ((TitleEntry) lstTitles.SelectedItems[0]).Item;
+
+            if (item.DLCs == 0)
+            {
+                showTitleDlcToolStripMenuItem.IsEnabled = false;
+                downloadAllDlcsToolStripMenuItem.IsEnabled = false;
+            }
+            else
+            {
+                showTitleDlcToolStripMenuItem.IsEnabled = true;
+                downloadAllDlcsToolStripMenuItem.IsEnabled = true;
             }
         }
 
         private void ShowDescriptionPanel(object sender, EventArgs e)
         {
-            Desc d = new Desc(lstTitles);
-            d.Show();
+            /*
+                Desc d = new Desc(lstTitles);
+                d.Show();
+            */
         }
 
-        private void cmbType_SelectedIndexChanged(object sender, EventArgs e)
-        {
-        }
-
-        private void splitContainer1_Panel1_Paint(object sender, PaintEventArgs e)
-        {
-        }
-*/
         private void button5_Click()
         {
-            if (lstDownloadStatus.SelectedItems.Count == 0) return;
-            var worker = (DownloadWorkerItem) lstDownloadStatus.SelectedItems[0];
-            DownloadWorker itm = worker.Worker;
-
-            if (File.Exists(itm.Pkg))
+            if (lstDownloadStatus.SelectedItems.Count == 0)
             {
-                System.Diagnostics.Process.Start("explorer.exe", "/select, " + itm.Pkg);
+                return;
+            }
+
+            foreach (DownloadWorkerItem worker in lstDownloadStatus.SelectedItems)
+            {
+                var itm = worker.Worker;
+
+                if (File.Exists(itm.Pkg))
+                {
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        Process.Start("explorer.exe", "/select, " + itm.Pkg);
+                    }
+                    else
+                    {
+                        Process.Start(Path.GetDirectoryName(itm.Pkg));
+                    }
+                }
             }
         }
-/*
-        private void ts_changeLog_Click(object sender, EventArgs e)
+
+        private void ts_changeLog_Click()
         {
             if (releases == null) return;
             foreach (var r in releases)
@@ -987,7 +998,7 @@ namespace NPS
             }
         }
 
-        private void changelogToolStripMenuItem_Click(object sender, EventArgs e)
+        private void changelogToolStripMenuItem_Click()
         {
             if (releases == null) return;
             Release r = releases[0];
@@ -998,9 +1009,9 @@ namespace NPS
             MessageBox.Show(result, "Changelog " + r.version);
         }
 
-        private void checkForPatchesToolStripMenuItem_Click(object sender, EventArgs e)
+        private void checkForPatchesToolStripMenuItem_Click()
         {
-            if (string.IsNullOrEmpty(Settings.Instance.HmacKey))
+/*            if (string.IsNullOrEmpty(Settings.Instance.HmacKey))
             {
                 MessageBox.Show("No hmackey");
                 return;
@@ -1016,41 +1027,31 @@ namespace NPS
                 downloads.Add(dw);
             });
 
-            gp.AskForUpdate();
+            gp.AskForUpdate();*/
         }
 
-        private void toggleDownloadedToolStripMenuItem_Click(object sender, EventArgs e)
+        private void toggleDownloadedToolStripMenuItem_Click()
         {
             if (lstTitles.SelectedItems.Count == 0) return;
 
             for (int i = 0; i < lstTitles.SelectedItems.Count; i++)
             {
-                if (Settings.Instance.HistoryInstance.completedDownloading.Contains(
-                    lstTitles.SelectedItems[i].Tag as Item))
+                var item = ((TitleEntry) lstTitles.SelectedItems[i]).Item;
 
+                if (Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
                 {
                     //lstTitles.SelectedItems[i].BackColor = ColorTranslator.FromHtml("#FFFFFF");
-                    Settings.Instance.HistoryInstance.completedDownloading.Remove(
-                        lstTitles.SelectedItems[i].Tag as Item);
+                    Settings.Instance.HistoryInstance.completedDownloading.Remove(item);
                 }
                 else
                 {
                     //lstTitles.SelectedItems[i].BackColor = ColorTranslator.FromHtml("#B7FF7C");
-                    Settings.Instance.HistoryInstance.completedDownloading.Add(lstTitles.SelectedItems[i].Tag as Item);
+                    Settings.Instance.HistoryInstance.completedDownloading.Add(item);
                 }
             }
 
             updateSearch();
         }
-
-        private void panel1_Paint(object sender, PaintEventArgs e)
-        {
-        }
-
-        private void splList_Panel2_Paint(object sender, PaintEventArgs e)
-        {
-        }
-
 
         private void chkHideDownloaded_CheckedChanged(object sender, EventArgs e)
         {
@@ -1069,31 +1070,33 @@ namespace NPS
         {
         }
 
-        private void rbnDownloaded_CheckedChanged(object sender, EventArgs e)
+        private void rbnDownloaded_CheckedChanged()
         {
             updateSearch();
         }
 
-        private void rbnUndownloaded_CheckedChanged(object sender, EventArgs e)
+        private void rbnUndownloaded_CheckedChanged()
         {
-            chkUnless.Enabled = rbnUndownloaded.Checked;
+            chkUnless.IsEnabled = rbnUndownloaded.IsChecked == true;
             updateSearch();
         }
 
-        private void rbnAll_CheckedChanged(object sender, EventArgs e)
+        private void rbnAll_CheckedChanged()
         {
             updateSearch();
         }
-
 
         private void libraryToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            /*
             Library l = new Library(databaseAll);
             l.Show();
+            */
         }
 
-        private void toolStripMenuItem1_Click(object sender, EventArgs e)
+        private void toolStripMenuItem1_Click()
         {
+            /*
             if (string.IsNullOrEmpty(Settings.Instance.CompPackUrl))
             {
                 MessageBox.Show("No CompPack url");
@@ -1113,16 +1116,21 @@ namespace NPS
                 }
             });
             cp.ShowDialog();
+            */
         }
-*/
+
 
         // ReSharper disable InconsistentNaming
-        private MenuItem DownloadUpdateMenuItem;
         private DataGrid lstDownloadStatus;
         private DataGrid lstTitles;
 
+        private MenuItem DownloadUpdateMenuItem;
         private MenuItem OptionsMenuItem;
         private MenuItem SyncMenuItem;
+        private MenuItem ChangelogMenuItem;
+        private MenuItem ExitMenuItem;
+        private MenuItem DownloadMenuItem;
+        private MenuItem UpdateChangelogMenuItem;
 
         private RadioButton rbnGames;
         private RadioButton rbnAvatars;
@@ -1153,20 +1161,31 @@ namespace NPS
         private Button btnResumeAll;
         private Button btnPauseAll;
 
+        private MenuItem downloadAndUnpackToolStripMenuItem;
+        private MenuItem showTitleDlcToolStripMenuItem;
+        private MenuItem downloadAllDlcsToolStripMenuItem;
+        private MenuItem downloadAllToolStripMenuItem;
+        private MenuItem checkForPatchesToolStripMenuItem;
+        private MenuItem toggleDownloadedToolStripMenuItem;
+        private MenuItem toolStripMenuItem1;
+
+
         // ReSharper restore InconsistentNaming
 
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
 
-            DownloadUpdateMenuItem = this.Find<MenuItem>("DownloadUpdateMenuItem");
             lstDownloadStatus = this.Find<DataGrid>("DownloadStatusList");
             lstTitles = this.Find<DataGrid>("lstTitles");
+
+            DownloadUpdateMenuItem = this.Find<MenuItem>("DownloadUpdateMenuItem");
             OptionsMenuItem = this.Find<MenuItem>("OptionsMenuItem");
             SyncMenuItem = this.Find<MenuItem>("SyncMenuItem");
-
-            OptionsMenuItem.Command = ReactiveCommand.Create(optionsToolStripMenuItem_Click);
-            SyncMenuItem.Command = ReactiveCommand.Create(Sync);
+            ChangelogMenuItem = this.FindControl<MenuItem>("ChangelogMenuItem");
+            ExitMenuItem = this.FindControl<MenuItem>("ExitMenuItem");
+            DownloadMenuItem = this.FindControl<MenuItem>("DownloadMenuItem");
+            UpdateChangelogMenuItem = this.FindControl<MenuItem>("UpdateChangelogMenuItem");
 
             rbnGames = this.FindControl<RadioButton>("rbnGames");
             rbnAvatars = this.FindControl<RadioButton>("rbnAvatars");
@@ -1197,8 +1216,40 @@ namespace NPS
             btnResumeAll = this.FindControl<Button>("btnResumeAll");
             btnPauseAll = this.FindControl<Button>("btnPauseAll");
 
+            downloadAndUnpackToolStripMenuItem = this.FindControl<MenuItem>("downloadAndUnpackToolStripMenuItem");
+            showTitleDlcToolStripMenuItem = this.FindControl<MenuItem>("showTitleDlcToolStripMenuItem");
+            downloadAllDlcsToolStripMenuItem = this.FindControl<MenuItem>("downloadAllDlcsToolStripMenuItem");
+            downloadAllToolStripMenuItem = this.FindControl<MenuItem>("downloadAllToolStripMenuItem");
+            checkForPatchesToolStripMenuItem = this.FindControl<MenuItem>("checkForPatchesToolStripMenuItem");
+            toggleDownloadedToolStripMenuItem = this.FindControl<MenuItem>("toggleDownloadedToolStripMenuItem");
+            toolStripMenuItem1 = this.FindControl<MenuItem>("toolStripMenuItem1");
+
             this.WhenAnyValue(x => x.txtSearch.Text)
                 .Subscribe(_ => txtSearch_TextChanged());
+
+            this.WhenAnyValue(x => x.rbnGames.IsChecked)
+                .Subscribe(_ => rbnGames_CheckedChanged());
+
+            this.WhenAnyValue(x => x.rbnAvatars.IsChecked)
+                .Subscribe(_ => rbnAvatars_CheckedChanged());
+
+            this.WhenAnyValue(x => x.rbnThemes.IsChecked)
+                .Subscribe(_ => rbnThemes_CheckedChanged());
+
+            this.WhenAnyValue(x => x.rbnDLC.IsChecked)
+                .Subscribe(_ => rbnDLC_CheckedChanged());
+
+            this.WhenAnyValue(x => x.rbnUpdates.IsChecked)
+                .Subscribe(_ => rbnUpdates_CheckedChanged());
+
+            this.WhenAnyValue(x => x.rbnDownloaded.IsChecked)
+                .Subscribe(_ => rbnDownloaded_CheckedChanged());
+
+            this.WhenAnyValue(x => x.rbnAll.IsChecked)
+                .Subscribe(_ => rbnAll_CheckedChanged());
+
+            this.WhenAnyValue(x => x.rbnUndownloaded.IsChecked)
+                .Subscribe(_ => rbnUndownloaded_CheckedChanged());
 
             btnDownload.Command = ReactiveCommand.Create(btnDownload_Click);
 
@@ -1209,6 +1260,21 @@ namespace NPS
             btnOpenFolder.Command = ReactiveCommand.Create(button5_Click);
             btnResumeAll.Command = ReactiveCommand.Create(ResumeAllBtnClick);
             btnPauseAll.Command = ReactiveCommand.Create(PauseAllBtnClick);
+
+            downloadAndUnpackToolStripMenuItem.Command = ReactiveCommand.Create(btnDownload_Click);
+            showTitleDlcToolStripMenuItem.Command = ReactiveCommand.Create(showTitleDlcToolStripMenuItem_Click);
+            downloadAllDlcsToolStripMenuItem.Command = ReactiveCommand.Create(downloadAllDlcsToolStripMenuItem_Click);
+            downloadAllToolStripMenuItem.Command = ReactiveCommand.Create(downloadAllToolStripMenuItem_Click);
+            checkForPatchesToolStripMenuItem.Command = ReactiveCommand.Create(checkForPatchesToolStripMenuItem_Click);
+            toggleDownloadedToolStripMenuItem.Command = ReactiveCommand.Create(toggleDownloadedToolStripMenuItem_Click);
+            toolStripMenuItem1.Command = ReactiveCommand.Create(toolStripMenuItem1_Click);
+
+            OptionsMenuItem.Command = ReactiveCommand.Create(optionsToolStripMenuItem_Click);
+            SyncMenuItem.Command = ReactiveCommand.Create(Sync);
+            ChangelogMenuItem.Command = ReactiveCommand.Create(ts_changeLog_Click);
+            UpdateChangelogMenuItem.Command = ReactiveCommand.Create(changelogToolStripMenuItem_Click);
+            ExitMenuItem.Command = ReactiveCommand.Create(exitToolStripMenuItem_Click);
+            DownloadMenuItem.Command = ReactiveCommand.Create(downloadUpdateToolStripMenuItem_Click);
         }
     }
 

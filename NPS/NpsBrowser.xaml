@@ -22,15 +22,18 @@
                         <Image Source="/Assets/Images/menu-reload.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="_Changelog" />
+                <MenuItem Name="ChangelogMenuItem" Header="_Changelog" />
                 <Separator />
-                <MenuItem Header="_Exit">
+                <MenuItem Name="ExitMenuItem" Header="_Exit">
                     <MenuItem.Icon>
                         <Image Source="/Assets/Images/menu-exit.png" />
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
-            <MenuItem Header="Download Update" Name="DownloadUpdateMenuItem" IsVisible="False" />
+            <MenuItem Header="Download Update" Name="DownloadUpdateMenuItem" IsVisible="False">
+                <MenuItem Name="DownloadMenuItem" Header="_Download" />
+                <MenuItem Name="UpdateChangelogMenuItem" Header="_Changelog" />
+            </MenuItem>
             <MenuItem Header="Description panel" />
             <MenuItem Header="Library" />
         </Menu>
@@ -53,19 +56,19 @@
 
         <!-- Download controls -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
-            <Button Name="btnResume">
+            <Button ToolTip.Tip="Resume selected download" Name="btnResume">
                 <Image Source="/Assets/Images/menu-resume.png" />
             </Button>
-            <Button Name="btnPause">
+            <Button ToolTip.Tip="Pause selected download" Name="btnPause">
                 <Image Source="/Assets/Images/menu-pause.png" />
             </Button>
-            <Button Name="btnCancel">
+            <Button ToolTip.Tip="Cancel selected download" Name="btnCancel">
                 <Image Source="/Assets/Images/menu-cancel.png" />
             </Button>
-            <Button Name="btnClear">
+            <Button ToolTip.Tip="Clear completed downloads " Name="btnClear">
                 <Image Source="/Assets/Images/menu-clear.png" />
             </Button>
-            <Button Name="btnOpenFolder">
+            <Button ToolTip.Tip="Show pkg file in file manager" Name="btnOpenFolder">
                 <Image Source="/Assets/Images/opened-folder.png" />
             </Button>
             <Button Name="btnResumeAll">
@@ -137,6 +140,23 @@
                     <DataGridTextColumn Header="DLCs" Binding="{Binding DLCs}" />
                     <DataGridTextColumn Header="Last Modified" Binding="{Binding LastModified}" Width="150" />
                 </DataGrid.Columns>
+                <DataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Name="downloadAndUnpackToolStripMenuItem" Header="Download and Unpack">
+                            <MenuItem.Icon><Image Source="/Assets/Images/menu-unpack.png" /></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Name="showTitleDlcToolStripMenuItem" Header="Show Title DLCs">
+                            <MenuItem.Icon><Image Source="/Assets/Images/menu-show-dlc.png" /></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Name="downloadAllDlcsToolStripMenuItem" Header="Download All DLCs">
+                            <MenuItem.Icon><Image Source="/Assets/Images/menu-download-dlc.png" /></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Name="downloadAllToolStripMenuItem" Header="Download All" />
+                        <MenuItem Name="checkForPatchesToolStripMenuItem" Header="Check for Patches" />
+                        <MenuItem Name="toggleDownloadedToolStripMenuItem" Header="Toggle Download Mark" />
+                        <MenuItem Name="toolStripMenuItem1" Header="Download CompPack" />
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
             </DataGrid>
         </DockPanel>
     </DockPanel>
