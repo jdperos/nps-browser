@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -265,7 +267,14 @@ namespace NPS
         {
             if (listView1.SelectedItems.Count == 0) return;
             var path = ((LibraryItem) listView1.SelectedItems[0]).path;
-            System.Diagnostics.Process.Start("explorer.exe", "/select, " + path);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Process.Start("explorer.exe", "/select, " + path);
+            }
+            else
+            {
+                Process.Start(Path.GetDirectoryName(path));
+            }
         }
 
         private void button2_Click()

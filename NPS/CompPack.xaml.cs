@@ -1,31 +1,40 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Net;
 using System.Text;
 using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
+using NPS.Helpers;
+using ReactiveUI;
 
 namespace NPS
 {
     public partial class CompPack : Window
     {
         public static bool compPackChanged = false;
-/*
-        private NPSBrowser mainForm;
+        private readonly ObservableCollection<CompPackItem> _comboBoxItems = new ObservableCollection<CompPackItem>();
+
+        private NpsBrowser mainForm;
         private Item item;
         private static List<CompPackItem> compPackList = null;
 
-        private Action<Item[]> finalresult;
-
-        public CompPack(NPSBrowser mainForm, Item item, Action<Item[]> result)
+        public CompPack(NpsBrowser mainForm, Item item)
         {
             InitializeComponent();
+
             this.mainForm = mainForm;
             this.item = item;
-            this.finalresult = result;
         }
 
-        private void CompPack_Load(object sender, EventArgs e)
+        public CompPack() : this(null, null)
         {
+        }
+
+        protected override void OnOpened(EventArgs e)
+        {
+            base.OnOpened(e);
+
             try
             {
                 if (compPackList == null || compPackChanged)
@@ -37,13 +46,15 @@ namespace NPS
                         compPackList.AddRange(LoadCompPacks(Settings.Instance.CompPackPatchUrl));
                 }
 
-                List<CompPackItem> result = new List<CompPackItem>();
+                var result = new List<CompPackItem>();
                 foreach (var cp in compPackList)
+                {
                     if (cp.titleId.Equals(item.TitleId))
                     {
                         result.Add(cp);
-                        comboBox1.Items.Add(cp);
+                        _comboBoxItems.Add(cp);
                     }
+                }
 
                 if (result.Count == 0)
                 {
@@ -56,8 +67,6 @@ namespace NPS
                 MessageBox.Show(er.Message);
                 this.Close();
             }
-
-
         }
 
         private List<CompPackItem> LoadCompPacks(string url)
@@ -70,7 +79,7 @@ namespace NPS
             wc.Dispose();
             content = Encoding.UTF8.GetString(Encoding.Default.GetBytes(content));
 
-            string[] lines = content.Split(new string[] { "\r\n", "\n\r", "\n", "\r" }, StringSplitOptions.None);
+            string[] lines = content.Split(new string[] {"\r\n", "\n\r", "\n", "\r"}, StringSplitOptions.None);
             foreach (string s in lines)
             {
                 if (!string.IsNullOrEmpty(s))
@@ -78,10 +87,9 @@ namespace NPS
             }
 
             return list;
-
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void button1_Click()
         {
             if (comboBox1.SelectedItem == null) return;
 
@@ -90,28 +98,36 @@ namespace NPS
             CompPackItem cpi = (comboBox1.SelectedItem as CompPackItem);
             if (!cpi.ver.Equals("01.00"))
             {
-                var cpiBase = (comboBox1.Items[0] as CompPackItem);
+                var cpiBase = (_comboBoxItems[0] as CompPackItem);
                 if (cpiBase.ver.Equals("01.00"))
                 {
                     res.Add(cpiBase.ToItem());
                 }
             }
+
             res.Add(cpi.ToItem());
 
 
-
-
-            finalresult.Invoke(res.ToArray());
-            this.Close();
+            this.Close(res.ToArray());
             //DownloadWorker dw = new DownloadWorker(itm, mainForm);
             //dw.Start();
         }
-*/
+
+        private ComboBox comboBox1;
+
+        private void InitializeComponent()
+        {
+            AvaloniaXamlLoader.Load(this);
+
+            comboBox1 = this.FindControl<ComboBox>("comboBox1");
+            this.FindControl<Button>("button1").Command = ReactiveCommand.Create(button1_Click);
+
+            comboBox1.Items = _comboBoxItems;
+        }
     }
 
     internal class CompPackItem
     {
-
         public CompPackItem(string unparsedRow)
         {
             var t = unparsedRow.Split('=');
@@ -119,9 +135,10 @@ namespace NPS
             this.title = t[1];
             t = t[0].Split('/');
             this.titleId = t[t.Length - 2];
-            this.ver = t[t.Length - 1].Split('-')[2].Replace("_", ".");/*.Replace(".ppk", "")*/;
-
+            this.ver = t[t.Length - 1].Split('-')[2].Replace("_", "."); /*.Replace(".ppk", "")*/
+            ;
         }
+
         public string titleId;
         public string ver;
         public string title;
@@ -138,7 +155,8 @@ namespace NPS
             i.ItsCompPack = true;
             i.TitleId = this.titleId;
 
-            i.TitleName = this.title + " CompPack_" + this.ver; ;
+            i.TitleName = this.title + " CompPack_" + this.ver;
+            ;
             var urlArr = Settings.Instance.CompPackUrl.Split('/');
 
             string url = "";
@@ -146,6 +164,7 @@ namespace NPS
             {
                 url += urlArr[c] + "/";
             }
+
             url += this.url;
             //string url = Settings.Instance.compPackUrl.Replace("entries.txt", this.url);
             i.pkg = url;
@@ -155,4 +174,3 @@ namespace NPS
         }
     }
 }
-

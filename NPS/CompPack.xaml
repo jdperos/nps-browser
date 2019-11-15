@@ -1,0 +1,18 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        Width="470" Height="100"
+        x:Class="NPS.CompPack"
+        Icon="/Assets/Images/8-512.ico"
+        Title="CompPack"
+        Padding="4">
+
+    <DockPanel>
+        <ComboBox DockPanel.Dock="Top" Name="comboBox1" />
+        <Button DockPanel.Dock="Bottom" Name="button1" Content="Download" />
+        <TextBlock VerticalAlignment="Center" Margin="4" Text="When downloading CompPack for patches, Base CompPack will be downloaded automatically" />
+    </DockPanel>
+
+</Window>

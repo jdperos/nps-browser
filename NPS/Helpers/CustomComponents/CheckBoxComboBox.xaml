@@ -5,4 +5,28 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="NPS.Helpers.CustomComponents.CheckBoxComboBox">
 
+    <Border Name="Border" BorderBrush="{DynamicResource ThemeBorderMidBrush}" BorderThickness="1">
+        <Panel Background="#FFFFFF">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Margin="2, 0" VerticalAlignment="Center" Grid.Column="0" Name="Content" />
+                <ToggleButton Grid.Column="1" Name="Button" Content="Foo">
+                    <Path Fill="{DynamicResource ThemeForegroundBrush}"
+                          Width="8"
+                          Height="4"
+                          Stretch="Uniform"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Data="F1 M 301.14,-189.041L 311.57,-189.041L 306.355,-182.942L 301.14,-189.041 Z" />
+                </ToggleButton>
+                <Popup
+                    MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource FindAncestor, AncestorType=Grid}}"
+                    Name="Popup"
+                    PlacementTarget="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=UserControl}}"
+                    StaysOpen="False">
+                    <ItemsControl Name="Items" />
+                </Popup>
+            </Grid>
+        </Panel>
+    </Border>
+
 </UserControl>

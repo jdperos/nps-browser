@@ -1093,9 +1093,8 @@ namespace NPS
             l.Show();
         }
 
-        private void toolStripMenuItem1_Click()
+        private async void toolStripMenuItem1_Click()
         {
-            /*
             if (string.IsNullOrEmpty(Settings.Instance.CompPackUrl))
             {
                 MessageBox.Show("No CompPack url");
@@ -1104,18 +1103,21 @@ namespace NPS
 
             if (lstTitles.SelectedItems.Count == 0) return;
 
-            CompPack cp = new CompPack(this, lstTitles.SelectedItems[0].Tag as Item, (item) =>
+            var item = ((TitleEntry) lstTitles.SelectedItems[0]).Item;
+            var cp = new CompPack(this, item);
+
+            var res = await cp.ShowDialog<Item[]>(this);
+            if (res == null)
             {
-                foreach (var itm in item)
-                {
-                    DownloadWorker dw = new DownloadWorker(itm, this);
-                    lstDownloadStatus.Items.Add(dw.lvi);
-                    lstDownloadStatus.AddEmbeddedControl(dw.progress, 3, lstDownloadStatus.Items.Count - 1);
-                    downloads.Add(dw);
-                }
-            });
-            cp.ShowDialog();
-            */
+                return;
+            }
+
+            foreach (var itm in res)
+            {
+                var dw = new DownloadWorker(itm);
+                _downloadWorkerItems.Add(dw.lvi);
+                downloads.Add(dw);
+            }
         }
 
 

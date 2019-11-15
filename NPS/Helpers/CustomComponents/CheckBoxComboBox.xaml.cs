@@ -2,8 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Markup.Xaml;
+using Avalonia.VisualTree;
 using ReactiveUI;
 
 namespace NPS.Helpers.CustomComponents
@@ -18,7 +22,10 @@ namespace NPS.Helpers.CustomComponents
 
         private readonly CheckBoxComboBoxItems _itemsWrapper;
         private readonly CheckBoxComboBoxCheckBoxes _checkBoxesWrapper;
-        private readonly ComboBox _comboBox;
+        private readonly ItemsControl _itemsControl;
+        private readonly Popup _popup;
+        private readonly ToggleButton _button;
+        private readonly TextBlock _text;
 
         public IList<string> Items => _itemsWrapper;
         public IReadOnlyList<CheckBox> CheckBoxItems => _checkBoxesWrapper;
@@ -32,8 +39,46 @@ namespace NPS.Helpers.CustomComponents
 
             InitializeComponent();
 
-            //_comboBox = this.FindControl<ComboBox>("ComboBox");
-            //_comboBox.Items = _items;
+            _itemsControl = this.FindControl<ItemsControl>("Items");
+            _itemsControl.Items = _checkBoxes;
+
+            _popup = this.FindControl<Popup>("Popup");
+            _button = this.FindControl<ToggleButton>("Button");
+            _text = this.FindControl<TextBlock>("Content");
+
+            this.WhenAnyValue(x => x._button.IsChecked)
+                .Subscribe(n =>
+                {
+                    if (n == true)
+                    {
+                        _popup.Open();
+                    }
+                    else
+                    {
+                        _popup.Close();
+                    }
+                });
+
+            _popup.Closed += (sender, args) => _button.IsChecked = false;
+        }
+
+        protected override void OnPointerPressed(PointerPressedEventArgs e)
+        {
+            if (!e.Handled)
+            {
+                if (_popup?.IsInsidePopup((IVisual) e.Source) == false)
+                {
+                    _button.IsChecked = !_button.IsChecked;
+                    e.Handled = true;
+                }
+            }
+
+            base.OnPointerPressed(e);
+        }
+
+        private void UpdateText()
+        {
+            _text.Text = string.Join(", ", _checkBoxes.Where(x => x.IsChecked == true).Select(x => x.Content));
         }
 
         private void InitializeComponent()
@@ -43,6 +88,7 @@ namespace NPS.Helpers.CustomComponents
 
         private void CheckedChanged()
         {
+            UpdateText();
             CheckBoxCheckedChanged?.Invoke(this, EventArgs.Empty);
         }
 
