@@ -2,7 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:custom="clr-namespace:NPS.Helpers.CustomComponents"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
+        Width="1100" Height="750"
         x:Class="NPS.NpsBrowser"
         Icon="/Assets/Images/8-512.ico"
         Title="NPS Browser">
@@ -28,41 +30,114 @@
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
-            <MenuItem Header="Download Update" Name="DownloadUpdateMenuItem" />
+            <MenuItem Header="Download Update" Name="DownloadUpdateMenuItem" IsVisible="False" />
             <MenuItem Header="Description panel" />
             <MenuItem Header="Library" />
         </Menu>
+
         <!-- Downloads list -->
-        <DataGrid MinHeight="200" DockPanel.Dock="Bottom" Name="DownloadStatusList" />
+        <DataGrid MinHeight="200" DockPanel.Dock="Bottom" Name="DownloadStatusList">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Title" Width="450" Binding="{Binding Title}" />
+                <DataGridTextColumn Header="Speed" Width="120" Binding="{Binding Speed}" />
+                <DataGridTextColumn Header="Status" Width="100" Binding="{Binding Status}" />
+                <DataGridTemplateColumn Header="Progress" Width="350" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ProgressBar Value="{Binding Progress}"></ProgressBar>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
         <!-- Download controls -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
-            <Button>
+            <Button Name="btnResume">
                 <Image Source="/Assets/Images/menu-resume.png" />
             </Button>
-            <Button>
+            <Button Name="btnPause">
                 <Image Source="/Assets/Images/menu-pause.png" />
             </Button>
-            <Button>
+            <Button Name="btnCancel">
                 <Image Source="/Assets/Images/menu-cancel.png" />
             </Button>
-            <Button>
+            <Button Name="btnClear">
                 <Image Source="/Assets/Images/menu-clear.png" />
             </Button>
-            <Button>
+            <Button Name="btnOpenFolder">
                 <Image Source="/Assets/Images/opened-folder.png" />
             </Button>
-            <Button>
+            <Button Name="btnResumeAll">
                 <StackPanel Orientation="Horizontal">
                     <Image Source="/Assets/Images/menu-resume.png" />
                     <TextBlock Text="Resume All" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
-            <Button>
+            <Button Name="btnPauseAll">
                 <StackPanel Orientation="Horizontal">
                     <Image Source="/Assets/Images/menu-pause.png" />
                     <TextBlock Text="Pause All" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
         </StackPanel>
+
+        <!-- Game list filters -->
+
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Right">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Name="rbnAll" Content="All" GroupName="downloadedFilter" IsChecked="True" />
+                    <RadioButton Name="rbnUndownloaded" Content="Undownloaded" GroupName="downloadedFilter" />
+                    <RadioButton Name="rbnDownloaded" Content="Downloaded" GroupName="downloadedFilter" />
+                </StackPanel>
+                <CheckBox Content="Unless new DLC" Name="chkUnless" />
+                <Button Name="btnDownload">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="/Assets/Images/menu-download.png" />
+                        <TextBlock Text="Download and Unpack" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- Search -->
+            <DockPanel DockPanel.Dock="Top">
+                <custom:CheckBoxComboBox Name="cmbType" MinWidth="200" DockPanel.Dock="Right" />
+                <custom:CheckBoxComboBox Name="cmbRegion" MinWidth="200" DockPanel.Dock="Right" />
+                <TextBox Name="txtSearch" Watermark="Search" />
+            </DockPanel>
+
+            <!-- Game list filters -->
+            <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+                <TextBlock DockPanel.Dock="Left" Text="Browse" VerticalAlignment="Center" />
+
+                <RadioButton DockPanel.Dock="Left" IsEnabled="False" GroupName="browseType" Name="rbnGames"
+                             Content="Games" />
+                <RadioButton DockPanel.Dock="Left" IsEnabled="False" GroupName="browseType" Name="rbnAvatars"
+                             IsVisible="False"
+                             Content="Avatars" />
+                <RadioButton DockPanel.Dock="Left" IsEnabled="False" GroupName="browseType" Name="rbnDLC"
+                             Content="DLC" />
+                <RadioButton DockPanel.Dock="Left" IsEnabled="False" GroupName="browseType" Name="rbnThemes"
+                             Content="Themes" />
+                <RadioButton DockPanel.Dock="Left" IsEnabled="False" GroupName="browseType" Name="rbnUpdates"
+                             IsVisible="False"
+                             Content="Updates" />
+
+                <TextBlock DockPanel.Dock="Right" Name="lblCount" VerticalAlignment="Center" />
+            </DockPanel>
+
+            <!-- Game list -->
+            <DataGrid Name="lstTitles" IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Title ID" Binding="{Binding TitleId}" Width="80" />
+                    <DataGridTextColumn Header="Region" Binding="{Binding Region}" Width="50" />
+                    <DataGridTextColumn Header="Title" Binding="{Binding TitleName}" Width="400" />
+                    <DataGridTextColumn Header="Type" Binding="{Binding ContentType}" />
+                    <DataGridTextColumn Header="DLCs" Binding="{Binding DLCs}" />
+                    <DataGridTextColumn Header="Last Modified" Binding="{Binding LastModified}" Width="150" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
     </DockPanel>
 </Window>

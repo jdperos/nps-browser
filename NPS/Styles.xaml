@@ -8,12 +8,14 @@
                     <ControlTemplate>
                         <Border>
                             <StackPanel>
+                                <!-- ReSharper disable Xaml.InvalidType -->
                                 <ContentPresenter TextBlock.FontWeight="Bold" Content="{TemplateBinding Header}" />
                                 <Border
                                     BorderBrush="{TemplateBinding Background}"
                                     BorderThickness="2"
                                     CornerRadius="5">
                                     <ContentPresenter Content="{TemplateBinding Content}" />
+                                    <!-- ReSharper restore Xaml.InvalidType -->
                                 </Border>
                             </StackPanel>
                         </Border>

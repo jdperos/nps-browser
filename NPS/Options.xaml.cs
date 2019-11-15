@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Net;
+using System.Reactive.Linq;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
@@ -316,10 +317,16 @@ namespace NPS
 
             btnSyncNow.Command = ReactiveCommand.Create(btnSyncNow_Click);
             this.WhenAnyValue(x => x.simultaneousDl.Value)
+                .Skip(1) // Skip initial value
                 .Subscribe(_ => simultaneous_ValueChanged());
 
             this.WhenAnyValue(x => x.deleteAfterUnpack.IsChecked)
+                .Skip(1) // Skip initial value
                 .Subscribe(_ => deleteAfterUnpack_CheckedChanged());
+
+            this.WhenAnyValue(x => x.chkbx_proxy.IsChecked)
+                .Skip(1) // Skip initial value
+                .Subscribe(_ => chkbx_proxy_CheckedChanged());
         }
     }
 }

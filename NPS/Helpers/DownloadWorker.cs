@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -8,13 +7,13 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.IO.Compression;
-using Avalonia.Controls;
 using Avalonia.Threading;
 using NPS.Helpers;
+using ReactiveUI;
 
 namespace NPS
 {
-    [System.Serializable]
+    [Serializable]
     public class DownloadWorker
     {
         public Item currentDownload;
@@ -22,8 +21,6 @@ namespace NPS
         //private WebClient webClient;
         private DateTime lastUpdate;
         private long lastBytes;
-        [System.NonSerialized] public ProgressBar progress = new ProgressBar();
-        public DownloadWorkerItem lvi;
 
         public int progressValue = 0;
         //public bool isRunning { get; private set; }
@@ -31,13 +28,14 @@ namespace NPS
         //public bool isCanceled { get; private set; }
 
         public WorkerStatus status { get; private set; }
-        [System.NonSerialized] private DispatcherTimer timer = new DispatcherTimer();
 
+        [NonSerialized] public DownloadWorkerItem lvi;
+        [NonSerialized] private DispatcherTimer timer = new DispatcherTimer();
 
         public DownloadWorker(Item itm)
         {
             currentDownload = itm;
-            lvi = new DownloadWorkerItem(itm.TitleName);
+            lvi = new DownloadWorkerItem(this, itm.TitleName);
             lvi.Speed = "Waiting";
             //isRunning = false;
             //isCanceled = false;
@@ -50,22 +48,24 @@ namespace NPS
 
         public void Recreate()
         {
-            progress = new ProgressBar();
+            lvi = new DownloadWorkerItem(this, currentDownload.TitleName);
+            lvi.Speed = "Waiting";
+
             if (progressValue > 100) progressValue = 100;
-            progress.Value = progressValue;
+            lvi.Progress = progressValue;
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(1);
             timer.Tick += Timer_Tick;
 
             if (status == WorkerStatus.Running)
                 Start();
-            else if (this.status == WorkerStatus.Downloaded)
+            else if (status == WorkerStatus.Downloaded)
             {
                 Unpack();
             }
-            else if (this.status == WorkerStatus.Completed)
+            else if (status == WorkerStatus.Completed)
             {
-                lvi.Status = "";
+                lvi.Speed = "";
                 lvi.Status = "Completed";
             }
         }
@@ -105,7 +105,7 @@ namespace NPS
             lvi.Speed = "";
             lvi.Status = "Canceled";
             progressValue = 0;
-            progress.Value = progressValue;
+            lvi.Progress = progressValue;
             DeletePkg();
         }
 
@@ -177,7 +177,7 @@ namespace NPS
             }
         }
 
-        [System.NonSerialized] private Process unpackProcess = null;
+        [NonSerialized] private Process unpackProcess = null;
 
         public void Unpack()
         {
@@ -193,7 +193,7 @@ namespace NPS
                 return;
             }
 
-            if (this.status == WorkerStatus.Downloaded || this.status == WorkerStatus.Completed)
+            if (status == WorkerStatus.Downloaded || status == WorkerStatus.Completed)
             {
                 lvi.Status = "Unpacking";
 
@@ -235,20 +235,24 @@ namespace NPS
                     ["  "] = " "
                 };
 
-                ProcessStartInfo a = new ProcessStartInfo();
-                a.WorkingDirectory = Settings.Instance.DownloadDir + Path.DirectorySeparatorChar;
-                a.FileName = string.Format("\"{0}\"", Settings.Instance.PkgPath);
-                a.WindowStyle = ProcessWindowStyle.Hidden;
-                a.CreateNoWindow = true;
-                a.Arguments = replacements.Aggregate(Settings.Instance.PkgParams.ToLower(),
-                    (str, rep) => str.Replace(rep.Key, rep.Value));
-                unpackProcess = new Process();
-                unpackProcess.StartInfo = a;
+                var a = new ProcessStartInfo
+                {
+                    WorkingDirectory = Settings.Instance.DownloadDir + Path.DirectorySeparatorChar,
+                    FileName = Settings.Instance.PkgPath,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    CreateNoWindow = true,
+                    Arguments = replacements.Aggregate(Settings.Instance.PkgParams.ToLower(),
+                        (str, rep) => str.Replace(rep.Key, rep.Value)),
+                    UseShellExecute = false,
+                    RedirectStandardError = true
+                };
 
-                a.UseShellExecute = false;
-                a.RedirectStandardError = true;
+                unpackProcess = new Process
+                {
+                    StartInfo = a,
+                    EnableRaisingEvents = true
+                };
 
-                unpackProcess.EnableRaisingEvents = true;
                 unpackProcess.Exited += Proc_Exited;
                 unpackProcess.ErrorDataReceived += new DataReceivedEventHandler(UnpackProcess_ErrorDataReceived);
                 errors = new List<string>();
@@ -259,9 +263,9 @@ namespace NPS
 
         private void UnpackCompPack()
         {
-            if (this.status == WorkerStatus.Downloaded || this.status == WorkerStatus.Completed)
+            if (status == WorkerStatus.Downloaded || status == WorkerStatus.Completed)
             {
-                this.status = WorkerStatus.Completed;
+                status = WorkerStatus.Completed;
                 try
                 {
                     lvi.Status = "Processing";
@@ -270,7 +274,7 @@ namespace NPS
                     //    Directory.Delete(Path.Combine(Settings.Instance.downloadDir, "rePatch", currentDownload.TitleId), true);
 
 
-                    using (var archive = System.IO.Compression.ZipFile.OpenRead(
+                    using (var archive = ZipFile.OpenRead(
                         Path.Combine(Settings.Instance.DownloadDir,
                             currentDownload.DownloadFileName + currentDownload.extension)))
                     {
@@ -292,8 +296,8 @@ namespace NPS
                     //System.IO.Compression.ZipFile.ExtractToDirectory(Path.Combine(Settings.Instance.downloadDir, currentDownload.DownloadFileName + currentDownload.extension), Path.Combine(Settings.Instance.downloadDir, "rePatch", currentDownload.TitleId));
                     lvi.Speed = "";
                     lvi.Status = "Completed";
-                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(this.currentDownload))
-                        Settings.Instance.HistoryInstance.completedDownloading.Add(this.currentDownload);
+                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(currentDownload))
+                        Settings.Instance.HistoryInstance.completedDownloading.Add(currentDownload);
 
                     if (Settings.Instance.DeleteAfterUnpack)
                         DeletePkg();
@@ -308,9 +312,9 @@ namespace NPS
 
         private void UnpackPS3()
         {
-            if (this.status == WorkerStatus.Downloaded || this.status == WorkerStatus.Completed)
+            if (status == WorkerStatus.Downloaded || status == WorkerStatus.Completed)
             {
-                this.status = WorkerStatus.Completed;
+                status = WorkerStatus.Completed;
                 try
                 {
                     lvi.Status = "Processing";
@@ -351,8 +355,8 @@ namespace NPS
                     lvi.Speed = "";
                     lvi.Status = "Completed";
 
-                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(this.currentDownload))
-                        Settings.Instance.HistoryInstance.completedDownloading.Add(this.currentDownload);
+                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(currentDownload))
+                        Settings.Instance.HistoryInstance.completedDownloading.Add(currentDownload);
                 }
                 catch (Exception err)
                 {
@@ -371,7 +375,7 @@ namespace NPS
 
         private void Proc_Exited(object sender, EventArgs e)
         {
-            this.status = WorkerStatus.Completed;
+            status = WorkerStatus.Completed;
 
             var proc = (sender as Process);
             if (proc.ExitCode == 0)
@@ -381,8 +385,8 @@ namespace NPS
                     lvi.Speed = "";
                     lvi.Status = "Completed";
 
-                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(this.currentDownload))
-                        Settings.Instance.HistoryInstance.completedDownloading.Add(this.currentDownload);
+                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(currentDownload))
+                        Settings.Instance.HistoryInstance.completedDownloading.Add(currentDownload);
 
                     if (Settings.Instance.DeleteAfterUnpack)
                         DeletePkg();
@@ -410,8 +414,8 @@ namespace NPS
 
         private long totalSize = 0;
         private long completedSize = 0;
-        [System.NonSerialized] private System.IO.Stream smRespStream;
-        [System.NonSerialized] private System.IO.FileStream saveFileStream;
+        [NonSerialized] private Stream smRespStream;
+        [NonSerialized] private FileStream saveFileStream;
 
         private void DownloadFile(string sSourceURL, string sDestinationPath)
         {
@@ -422,40 +426,39 @@ namespace NPS
                 iBufferSize *= 1000;
                 long iExistLen = 0;
 
-                if (System.IO.File.Exists(sDestinationPath))
+                if (File.Exists(sDestinationPath))
                 {
-                    System.IO.FileInfo fINfo =
-                        new System.IO.FileInfo(sDestinationPath);
+                    FileInfo fINfo =
+                        new FileInfo(sDestinationPath);
                     iExistLen = fINfo.Length;
                 }
 
                 ;
                 if (iExistLen > 0)
-                    saveFileStream = new System.IO.FileStream(sDestinationPath,
-                        System.IO.FileMode.Append, System.IO.FileAccess.Write,
-                        System.IO.FileShare.ReadWrite);
+                    saveFileStream = new FileStream(sDestinationPath,
+                        FileMode.Append, FileAccess.Write,
+                        FileShare.ReadWrite);
                 else
-                    saveFileStream = new System.IO.FileStream(sDestinationPath,
-                        System.IO.FileMode.Create, System.IO.FileAccess.Write,
-                        System.IO.FileShare.ReadWrite);
+                    saveFileStream = new FileStream(sDestinationPath,
+                        FileMode.Create, FileAccess.Write,
+                        FileShare.ReadWrite);
 
                 HttpWebRequest hwRq;
-                System.Net.HttpWebResponse hwRes;
+                HttpWebResponse hwRes;
                 var urr = new Uri(sSourceURL);
-                hwRq = (System.Net.HttpWebRequest) System.Net.HttpWebRequest.Create(urr);
+                hwRq = (HttpWebRequest) WebRequest.Create(urr);
                 hwRq.Proxy = Settings.Instance.Proxy;
-                hwRes = (System.Net.HttpWebResponse) hwRq.GetResponse();
-                hwRes.Close();
+                hwRes = (HttpWebResponse) hwRq.GetResponse();
 
                 long totalLength = hwRes.ContentLength;
                 totalSize = totalLength;
                 if (totalLength != iExistLen)
                 {
-                    hwRq = (System.Net.HttpWebRequest) System.Net.HttpWebRequest.Create(urr);
+                    hwRq = (HttpWebRequest) WebRequest.Create(urr);
                     hwRq.Proxy = Settings.Instance.Proxy;
                     hwRq.AddRange(iExistLen);
 
-                    hwRes = (System.Net.HttpWebResponse) hwRq.GetResponse();
+                    hwRes = (HttpWebResponse) hwRq.GetResponse();
                     smRespStream = hwRes.GetResponseStream();
 
                     iFileSize = hwRes.ContentLength;
@@ -502,7 +505,7 @@ namespace NPS
             {
                 Dispatcher.UIThread.Post(() =>
                 {
-                    this.Pause();
+                    Pause();
                     MessageBox.Show(
                         "Unable to download \"" + currentDownload.TitleName + "\"." + Environment.NewLine + err.Message,
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -518,7 +521,7 @@ namespace NPS
         {
             timer.Stop();
 
-            this.status = WorkerStatus.Downloaded;
+            status = WorkerStatus.Downloaded;
 
             lvi.Speed = "";
 
@@ -526,7 +529,7 @@ namespace NPS
             Unpack();
 
             progressValue = 100;
-            progress.Value = progressValue;
+            lvi.Progress = progressValue;
         }
 
 
@@ -549,7 +552,7 @@ namespace NPS
                 if (prgs != float.NaN)
                 {
                     progressValue = Convert.ToInt32(prgs * 100);
-                    progress.Value = progressValue;
+                    lvi.Progress = progressValue;
                 }
             }
             catch
@@ -571,16 +574,37 @@ namespace NPS
         DownloadError
     }
 
-    public class DownloadWorkerItem
+    public class DownloadWorkerItem : ReactiveObject
     {
-        public DownloadWorkerItem(string title)
+        private string _speed = "";
+        private string _status = "";
+        private double _progress;
+
+        public DownloadWorkerItem(DownloadWorker worker, string title)
         {
+            Worker = worker;
             Title = title;
         }
 
+        public DownloadWorker Worker { get; }
         public string Title { get; }
-        public string Speed { get; set; } = "";
-        public string Status { get; set; } = "";
-        public double Progress { get; set; } = 0;
+
+        public string Speed
+        {
+            get => _speed;
+            set => this.RaiseAndSetIfChanged(ref _speed, value);
+        }
+
+        public string Status
+        {
+            get => _status;
+            set => this.RaiseAndSetIfChanged(ref _status, value);
+        }
+
+        public double Progress
+        {
+            get => _progress;
+            set => this.RaiseAndSetIfChanged(ref _progress, value);
+        }
     }
 }
