@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:custom="clr-namespace:NPS.Helpers.CustomComponents"
+        xmlns:nps="clr-namespace:NPS"
         mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
         Width="1100" Height="750"
         x:Class="NPS.NpsBrowser"
@@ -88,6 +89,17 @@
                 <!-- Game list -->
                 <DataGrid Name="lstTitles" IsReadOnly="True">
                     <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="20">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="nps:TitleEntry">
+                                    <Panel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                        <Panel.Background>
+                                            <SolidColorBrush Color="{Binding BackColor}" />
+                                        </Panel.Background>
+                                    </Panel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Title ID" Binding="{Binding TitleId}" Width="80" />
                         <DataGridTextColumn Header="Region" Binding="{Binding Region}" Width="50" />
                         <DataGridTextColumn Header="Title" Binding="{Binding TitleName}" Width="400" />
@@ -161,7 +173,7 @@
                         <DataGridTextColumn Header="Status" Width="100" Binding="{Binding Status}" />
                         <DataGridTemplateColumn Header="Progress" Width="350">
                             <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
+                                <DataTemplate DataType="nps:DownloadWorkerItem">
                                     <ProgressBar Value="{Binding Progress}" IsIndeterminate="{Binding ProgressIndeterminate}" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
