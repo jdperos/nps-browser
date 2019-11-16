@@ -7,7 +7,8 @@
         x:Class="NPS.Options"
         Icon="/Assets/Images/8-512.ico"
         Title="Options"
-        Padding="4">
+        Padding="4"
+        WindowStartupLocation="CenterOwner">
 
     <StackPanel>
         <!-- Game URIs -->

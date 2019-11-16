@@ -7,7 +7,8 @@
         x:Class="NPS.Library"
         Icon="/Assets/Images/8-512.ico"
         Title="Library"
-        Padding="4">
+        Padding="4"
+        WindowStartupLocation="CenterOwner">
 
     <DockPanel>
         <TextBlock Name="label1" DockPanel.Dock="Top" />

@@ -62,6 +62,8 @@ namespace NPS
                     return null;
                 }
 
+                comboBox1.SelectedIndex = 0;
+
                 return await ShowDialog<Item[]>(parent);
             }
             catch (Exception er)
