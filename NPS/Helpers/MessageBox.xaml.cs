@@ -12,17 +12,24 @@ namespace NPS.Helpers
             InitializeComponent();
         }
 
-        public static Task Show(string text, string title = "Alert!", MessageBoxButtons buttons = default,
+        public static void Show(string text, string title = "Alert!", MessageBoxButtons buttons = default,
             MessageBoxIcon icon = default)
         {
-            return Show(NpsBrowser.MainWindow, text, title, buttons, icon);
+            Show(NpsBrowser.MainWindow, text, title, buttons, icon);
         }
 
-        public static Task Show(Window parent, string text, string title = "Alert!", MessageBoxButtons buttons = default,
+        public static Task ShowAsync(Window parent, string text, string title = "Alert!", MessageBoxButtons buttons = default,
             MessageBoxIcon icon = default)
         {
             var box = CreateMessageBox(text, title);
             return box.ShowDialog(parent);
+        }
+
+        public static void Show(Window parent, string text, string title = "Alert!", MessageBoxButtons buttons = default,
+            MessageBoxIcon icon = default)
+        {
+            var box = CreateMessageBox(text, title);
+            box.ShowDialog(parent);
         }
 
         private static MessageBox CreateMessageBox(string text, string title)

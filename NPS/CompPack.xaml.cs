@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using NPS.Helpers;
@@ -31,19 +32,17 @@ namespace NPS
         {
         }
 
-        protected override void OnOpened(EventArgs e)
+        public async Task<Item[]> DoDialog(Window parent)
         {
-            base.OnOpened(e);
-
             try
             {
                 if (compPackList == null || compPackChanged)
                 {
                     compPackChanged = false;
-                    compPackList = LoadCompPacks(Settings.Instance.CompPackUrl);
+                    compPackList = await LoadCompPacks(Settings.Instance.CompPackUrl);
                     //   Settings.Instance.compPackPatchUrl = "";
                     if (!string.IsNullOrEmpty(Settings.Instance.CompPackPatchUrl))
-                        compPackList.AddRange(LoadCompPacks(Settings.Instance.CompPackPatchUrl));
+                        compPackList.AddRange(await LoadCompPacks(Settings.Instance.CompPackPatchUrl));
                 }
 
                 var result = new List<CompPackItem>();
@@ -60,27 +59,33 @@ namespace NPS
                 {
                     MessageBox.Show("No comp pack found");
                     this.Close();
+                    return null;
                 }
+
+                return await ShowDialog<Item[]>(parent);
             }
             catch (Exception er)
             {
                 MessageBox.Show(er.Message);
                 this.Close();
             }
+
+            return null;
         }
 
-        private List<CompPackItem> LoadCompPacks(string url)
+
+        private static async Task<List<CompPackItem>> LoadCompPacks(string url)
         {
-            List<CompPackItem> list = new List<CompPackItem>();
-            WebClient wc = new WebClient();
+            var list = new List<CompPackItem>();
+            var wc = new WebClient();
             wc.Proxy = Settings.Instance.Proxy;
             wc.Encoding = Encoding.UTF8;
-            string content = wc.DownloadString(new Uri(url));
+            var content = await wc.DownloadStringTaskAsync(new Uri(url));
             wc.Dispose();
             content = Encoding.UTF8.GetString(Encoding.Default.GetBytes(content));
 
-            string[] lines = content.Split(new string[] {"\r\n", "\n\r", "\n", "\r"}, StringSplitOptions.None);
-            foreach (string s in lines)
+            var lines = content.Split(new string[] {"\r\n", "\n\r", "\n", "\r"}, StringSplitOptions.None);
+            foreach (var s in lines)
             {
                 if (!string.IsNullOrEmpty(s))
                     list.Add(new CompPackItem(s));
@@ -93,9 +98,9 @@ namespace NPS
         {
             if (comboBox1.SelectedItem == null) return;
 
-            List<Item> res = new List<Item>();
+            var res = new List<Item>();
 
-            CompPackItem cpi = (comboBox1.SelectedItem as CompPackItem);
+            var cpi = (comboBox1.SelectedItem as CompPackItem);
             if (!cpi.ver.Equals("01.00"))
             {
                 var cpiBase = (_comboBoxItems[0] as CompPackItem);
@@ -151,7 +156,7 @@ namespace NPS
 
         public Item ToItem()
         {
-            Item i = new Item();
+            var i = new Item();
             i.ItsCompPack = true;
             i.TitleId = this.titleId;
 
@@ -159,8 +164,8 @@ namespace NPS
             ;
             var urlArr = Settings.Instance.CompPackUrl.Split('/');
 
-            string url = "";
-            for (int c = 0; c < urlArr.Length - 1; c++)
+            var url = "";
+            for (var c = 0; c < urlArr.Length - 1; c++)
             {
                 url += urlArr[c] + "/";
             }

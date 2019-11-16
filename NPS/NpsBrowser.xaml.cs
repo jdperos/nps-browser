@@ -1116,7 +1116,7 @@ namespace NPS
             var item = ((TitleEntry) lstTitles.SelectedItems[0]).Item;
             var cp = new CompPack(this, item);
 
-            var res = await cp.ShowDialog<Item[]>(this);
+            var res = await cp.DoDialog(this);
             if (res == null)
             {
                 return;
