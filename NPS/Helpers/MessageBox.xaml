@@ -1,0 +1,16 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        Width="300" Height="150"
+        x:Class="NPS.Helpers.MessageBox"
+        Icon="/Assets/Images/8-512.ico"
+        Padding="4"
+        WindowStartupLocation="CenterOwner">
+
+    <DockPanel>
+        <Button DockPanel.Dock="Bottom" HorizontalAlignment="Right" Name="Button" Content="OK" />
+        <TextBlock Name="Text" Margin="4" TextWrapping="Wrap" HorizontalAlignment="Center" />
+    </DockPanel>
+</Window>

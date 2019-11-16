@@ -28,6 +28,8 @@ namespace NPS
 {
     public partial class NpsBrowser : Window
     {
+        public static NpsBrowser MainWindow { get; private set; }
+
         public const string version = "0.94"; //Dyrqrap
         private List<Item> currentDatabase = new List<Item>();
 
@@ -107,6 +109,8 @@ namespace NPS
         protected override void OnOpened(EventArgs e)
         {
             base.OnOpened(e);
+
+            MainWindow = this;
 
             foreach (var hi in Settings.Instance.HistoryInstance.currentlyDownloading)
             {
@@ -649,9 +653,7 @@ namespace NPS
                         a.ParentGameTitle = result ?? string.Empty;
                     }
 
-                    var dw = new DownloadWorker(a);
-                    _downloadWorkerItems.Add(dw.lvi);
-                    downloads.Add(dw);
+                    StartDownload(a);
                 }
             }
         }
@@ -745,9 +747,7 @@ namespace NPS
 
                     if (!contains)
                     {
-                        var dw = new DownloadWorker(a);
-                        _downloadWorkerItems.Add(dw.lvi);
-                        downloads.Add(dw);
+                        StartDownload(a);
                     }
                 }
             }
@@ -1009,9 +1009,9 @@ namespace NPS
             MessageBox.Show(result, "Changelog " + r.version);
         }
 
-        private void checkForPatchesToolStripMenuItem_Click()
+        private async void checkForPatchesToolStripMenuItem_Click()
         {
-/*            if (string.IsNullOrEmpty(Settings.Instance.HmacKey))
+            if (string.IsNullOrEmpty(Settings.Instance.HmacKey))
             {
                 MessageBox.Show("No hmackey");
                 return;
@@ -1019,15 +1019,25 @@ namespace NPS
 
             if (lstTitles.SelectedItems.Count == 0) return;
 
-            GamePatches gp = new GamePatches(lstTitles.SelectedItems[0].Tag as Item, (item) =>
-            {
-                DownloadWorker dw = new DownloadWorker(item, this);
-                lstDownloadStatus.Items.Add(dw.lvi);
-                lstDownloadStatus.AddEmbeddedControl(dw.progress, 3, lstDownloadStatus.Items.Count - 1);
-                downloads.Add(dw);
-            });
+            var item = ((TitleEntry) lstTitles.SelectedItems[0]).Item;
 
-            gp.AskForUpdate();*/
+            var gp = new GamePatches(item);
+
+            var newItem = await gp.AskForUpdate(this);
+
+            if (newItem == null)
+            {
+                return;
+            }
+
+            StartDownload(newItem);
+        }
+
+        private void StartDownload(Item newItem)
+        {
+            var dw = new DownloadWorker(newItem);
+            _downloadWorkerItems.Add(dw.lvi);
+            downloads.Add(dw);
         }
 
         private void toggleDownloadedToolStripMenuItem_Click()
@@ -1114,9 +1124,7 @@ namespace NPS
 
             foreach (var itm in res)
             {
-                var dw = new DownloadWorker(itm);
-                _downloadWorkerItems.Add(dw.lvi);
-                downloads.Add(dw);
+                StartDownload(itm);
             }
         }
 

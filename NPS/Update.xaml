@@ -1,0 +1,25 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:nps="clr-namespace:NPS"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        Width="660" Height="270"
+        x:Class="NPS.GamePatches"
+        Icon="/Assets/Images/8-512.ico"
+        Title="Update"
+        Padding="4"
+        WindowStartupLocation="CenterOwner">
+
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Bottom" LastChildFill="False">
+            <Button DockPanel.Dock="Right" Name="button2" Content="Cancel" />
+            <Button DockPanel.Dock="Right" Name="button1" />
+        </DockPanel>
+
+        <ScrollViewer>
+            <TextBlock Name="Changes" />
+        </ScrollViewer>
+    </DockPanel>
+
+</Window>
