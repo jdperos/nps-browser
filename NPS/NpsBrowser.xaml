@@ -7,11 +7,10 @@
         Width="1100" Height="750"
         x:Class="NPS.NpsBrowser"
         Icon="/Assets/Images/8-512.ico"
-        Title="NPS Browser"
-        Padding="4">
+        Title="NPS Browser">
 
     <DockPanel>
-        <Menu Margin="0, 0, 0, 4" DockPanel.Dock="Top">
+        <Menu Margin="4" DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Name="OptionsMenuItem" Header="_Options">
                     <MenuItem.Icon>
@@ -152,11 +151,6 @@
                             <TextBlock Text="Pause All" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                    <ComboBox>
-                        <ComboBoxItem Content="A" />
-                        <ComboBoxItem Content="B" />
-                        <ComboBoxItem Content="C" />
-                    </ComboBox>
                 </StackPanel>
 
                 <!-- Downloads list -->
@@ -168,7 +162,7 @@
                         <DataGridTemplateColumn Header="Progress" Width="350">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <ProgressBar Value="{Binding Progress}" />
+                                    <ProgressBar Value="{Binding Progress}" IsIndeterminate="{Binding ProgressIndeterminate}" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

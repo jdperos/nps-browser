@@ -196,6 +196,7 @@ namespace NPS
             if (status == WorkerStatus.Downloaded || status == WorkerStatus.Completed)
             {
                 lvi.Status = "Unpacking";
+                lvi.ProgressIndeterminate = true;
 
                 String tempName = "";
                 string dlc = "";
@@ -384,6 +385,7 @@ namespace NPS
                 {
                     lvi.Speed = "";
                     lvi.Status = "Completed";
+                    lvi.ProgressIndeterminate = false;
 
                     if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(currentDownload))
                         Settings.Instance.HistoryInstance.completedDownloading.Add(currentDownload);
@@ -398,6 +400,7 @@ namespace NPS
                 {
                     lvi.Speed = "PKG decrypt err!";
                     lvi.Status = "";
+                    lvi.ProgressIndeterminate = false;
 
                     errors.Remove(null);
                     if (errors.Count > 0)
@@ -451,6 +454,9 @@ namespace NPS
                 hwRes = (HttpWebResponse) hwRq.GetResponse();
 
                 long totalLength = hwRes.ContentLength;
+
+                hwRes.Dispose();
+
                 totalSize = totalLength;
                 if (totalLength != iExistLen)
                 {
@@ -579,6 +585,7 @@ namespace NPS
         private string _speed = "";
         private string _status = "";
         private double _progress;
+        private bool _progressIndeterminate;
 
         public DownloadWorkerItem(DownloadWorker worker, string title)
         {
@@ -605,6 +612,12 @@ namespace NPS
         {
             get => _progress;
             set => this.RaiseAndSetIfChanged(ref _progress, value);
+        }
+
+        public bool ProgressIndeterminate
+        {
+            get => _progressIndeterminate;
+            set => this.RaiseAndSetIfChanged(ref _progressIndeterminate, value);
         }
     }
 }
