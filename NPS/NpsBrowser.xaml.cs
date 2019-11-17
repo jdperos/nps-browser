@@ -98,7 +98,7 @@ namespace NPS
 
             if (string.IsNullOrEmpty(Settings.Instance.PsvUri) && string.IsNullOrEmpty(Settings.Instance.PsvDlcUri))
             {
-                MessageBox.Show(
+                await MessageBox.ShowAsync(this,
                     "Application did not provide any links to external files or decrypt mechanism.\r\nYou need to specify tsv (tab splitted text) file with your personal links to pkg files on your own.\r\n\r\nFormat: TitleId Region Name Pkg Key",
                     "Disclaimer!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 var o = new Options(this);
