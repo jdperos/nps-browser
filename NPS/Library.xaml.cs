@@ -19,7 +19,7 @@ using Image = System.Drawing.Image;
 
 namespace NPS
 {
-    public partial class Library : Window
+    public class Library : Window
     {
         private List<Item> db;
 

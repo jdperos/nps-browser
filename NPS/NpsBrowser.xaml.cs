@@ -26,7 +26,7 @@ using ReactiveUI;
 
 namespace NPS
 {
-    public partial class NpsBrowser : Window
+    public class NpsBrowser : Window
     {
         public static NpsBrowser MainWindow { get; private set; }
 
@@ -949,12 +949,10 @@ namespace NPS
             }
         }
 
-        private void ShowDescriptionPanel(object sender, EventArgs e)
+        private void ShowDescriptionPanel()
         {
-            /*
-                Desc d = new Desc(lstTitles);
-                d.Show();
-            */
+            var d = new Desc(lstTitles);
+            d.Show();
         }
 
         private void button5_Click()
@@ -1141,6 +1139,7 @@ namespace NPS
         private MenuItem DownloadMenuItem;
         private MenuItem UpdateChangelogMenuItem;
         private MenuItem libraryToolStripMenuItem;
+        private MenuItem showDescriptionPanelToolStripMenuItem;
 
         private RadioButton rbnGames;
         private RadioButton rbnAvatars;
@@ -1197,6 +1196,7 @@ namespace NPS
             DownloadMenuItem = this.FindControl<MenuItem>("DownloadMenuItem");
             UpdateChangelogMenuItem = this.FindControl<MenuItem>("UpdateChangelogMenuItem");
             libraryToolStripMenuItem = this.FindControl<MenuItem>("libraryToolStripMenuItem");
+            showDescriptionPanelToolStripMenuItem = this.FindControl<MenuItem>("showDescriptionPanelToolStripMenuItem");
 
             rbnGames = this.FindControl<RadioButton>("rbnGames");
             rbnAvatars = this.FindControl<RadioButton>("rbnAvatars");
@@ -1287,6 +1287,7 @@ namespace NPS
             ExitMenuItem.Command = ReactiveCommand.Create(exitToolStripMenuItem_Click);
             DownloadMenuItem.Command = ReactiveCommand.Create(downloadUpdateToolStripMenuItem_Click);
             libraryToolStripMenuItem.Command = ReactiveCommand.Create(libraryToolStripMenuItem_Click);
+            showDescriptionPanelToolStripMenuItem.Command = ReactiveCommand.Create(ShowDescriptionPanel);
         }
     }
 

@@ -1,0 +1,29 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        Width="1000" Height="650"
+        x:Class="NPS.Desc"
+        Icon="/Assets/Images/8-512.ico"
+        Title="Description"
+        Padding="4"
+        WindowStartupLocation="CenterOwner">
+
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top" MinHeight="130">
+            <Image DockPanel.Dock="Left" Stretch="Uniform" MaxHeight="130" Name="pictureBox1" />
+            <Image DockPanel.Dock="Right" Stretch="Uniform" MaxHeight="130" Name="pictureBox3" />
+            <Image Stretch="Uniform" MaxHeight="130" Name="pictureBox2" />
+        </DockPanel>
+
+        <TextBlock DockPanel.Dock="Top" HorizontalAlignment="Left" Name="label1" />
+
+        <Grid Margin="4">
+            <TextBlock TextWrapping="Wrap" Name="richTextBox1" />
+            <Image Name="pb_status_loading" Stretch="None" IsVisible="True" Source="/Assets/Images/menu-reload.png" />
+            <Image Name="pb_status_error" Stretch="None" IsVisible="False" Source="/Assets/Images/menu-cancel.png" />
+        </Grid>
+    </DockPanel>
+
+</Window>

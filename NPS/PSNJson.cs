@@ -4,37 +4,51 @@ namespace NPS
 {
     internal class PSNJson
     {
-        public string cover
-        {
-            get
-            {
-                string r = null;
-                if (images.Length > 0) r = images[0].url;
-                return r;
-            }
-        }
+        public string cover => images.Length > 0 ? images[0].url : null;
 
 
         public string picture1
         {
             get
             {
-                string r = null;
-                if (promomedia.Length > 0)
-                    if (promomedia[0].materials.Length > 0)
-                        if (promomedia[0].materials[0].urls.Length > 0) r = promomedia[0].materials[0].urls[0].url;
-                return r;
+                if (promomedia.Length <= 0)
+                {
+                    return null;
+                }
+
+                if (promomedia[0].materials.Length <= 0)
+                {
+                    return null;
+                }
+
+                if (promomedia[0].materials[0].urls != null && promomedia[0].materials[0].urls.Length > 0)
+                {
+                    return promomedia[0].materials[0].urls[0].url;
+                }
+
+                return null;
             }
         }
         public string picture2
         {
             get
             {
-                string r = null;
-                if (promomedia.Length > 0)
-                    if (promomedia[0].materials.Length > 1)
-                        if (promomedia[0].materials[1].urls.Length > 0) r = promomedia[0].materials[1].urls[0].url;
-                return r;
+                if (promomedia.Length <= 0)
+                {
+                    return null;
+                }
+
+                if (promomedia[0].materials.Length <= 1)
+                {
+                    return null;
+                }
+
+                if (promomedia[0].materials[1].urls != null && promomedia[0].materials[1].urls.Length > 0)
+                {
+                    return promomedia[0].materials[1].urls[0].url;
+                }
+
+                return null;
             }
         }
 

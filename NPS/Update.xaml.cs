@@ -13,7 +13,7 @@ using ReactiveUI;
 
 namespace NPS
 {
-    public partial class GamePatches : Window
+    public class GamePatches : Window
     {
         private Item title;
         private Item newItem = null;

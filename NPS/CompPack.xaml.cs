@@ -11,7 +11,7 @@ using ReactiveUI;
 
 namespace NPS
 {
-    public partial class CompPack : Window
+    public class CompPack : Window
     {
         public static bool compPackChanged = false;
         private readonly ObservableCollection<CompPackItem> _comboBoxItems = new ObservableCollection<CompPackItem>();
