@@ -28,6 +28,9 @@ namespace NPS
 {
     public class NpsBrowser : Window
     {
+        private const int ColumnDlcs = 5;
+        private const int ColumnLastModified = 6;
+
         public static NpsBrowser MainWindow { get; private set; }
 
         public const string version = "0.94"; //Dyrqrap
@@ -88,6 +91,9 @@ namespace NPS
                     UpdateTitlesContextMenu();
                 },
                 handledEventsToo: true);
+
+            lstTitles.Columns[ColumnDlcs].SortMemberPath = nameof(TitleEntry.DlcCount);
+            lstTitles.Columns[ColumnLastModified].SortMemberPath = nameof(TitleEntry.LastModifiedTime);
         }
 
         public async void Start()
@@ -334,6 +340,7 @@ namespace NPS
                 a.ContentType = item.contentType;
 
                 a.DLCs = item.DLCs > 0 ? item.DLCs.ToString() : "";
+                a.DlcCount = item.DLCs;
 
                 if (item.lastModifyDate != DateTime.MinValue)
                 {
@@ -344,12 +351,14 @@ namespace NPS
                     a.LastModified = "";
                 }
 
+                a.LastModifiedTime = item.lastModifyDate;
+
                 a.Item = item;
 
                 list.Add(a);
             }
 
-            lstTitles.Columns[4].IsVisible = rbnDLC.IsChecked != true;
+            lstTitles.Columns[ColumnDlcs].IsVisible = rbnDLC.IsChecked != true;
             lstTitles.Items = new DataGridCollectionView(list);
 
             var type = "";
@@ -1298,6 +1307,9 @@ namespace NPS
         public string TitleName { get; set; }
         public string ContentType { get; set; }
         public string DLCs { get; set; }
+        // Used for sorting.
+        public int DlcCount { get; set; }
+        public DateTime LastModifiedTime { get; set; }
         public string LastModified { get; set; }
         public Color BackColor { get; set; }
         public Item Item { get; set; }

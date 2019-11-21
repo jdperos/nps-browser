@@ -87,7 +87,7 @@
                 </DockPanel>
 
                 <!-- Game list -->
-                <DataGrid Name="lstTitles" IsReadOnly="True">
+                <DataGrid Name="lstTitles" IsReadOnly="True" CanUserResizeColumns="True" CanUserReorderColumns="False">
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Width="20">
                             <DataGridTemplateColumn.CellTemplate>
