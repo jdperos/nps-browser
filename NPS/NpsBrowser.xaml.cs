@@ -102,10 +102,11 @@ namespace NPS
 
             _timer1.Start();
 
-            if (string.IsNullOrEmpty(Settings.Instance.PsvUri) && string.IsNullOrEmpty(Settings.Instance.PsvDlcUri))
+
+            if (IsDownloadConfigIncorrect())
             {
                 await MessageBox.ShowAsync(this,
-                    "Application did not provide any links to external files or decrypt mechanism.\r\nYou need to specify tsv (tab splitted text) file with your personal links to pkg files on your own.\r\n\r\nFormat: TitleId Region Name Pkg Key",
+                    "You need to specify a download location and PKG decryption tool in the options.",
                     "Disclaimer!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 var o = new Options(this);
                 await o.ShowDialog(this);
@@ -157,17 +158,24 @@ namespace NPS
             var sync = new SyncDB {Owner = this};
             sync.Show();
 
+            var sw = new Stopwatch();
+            sw.Start();
             var g = await sync.Sync();
+            Console.WriteLine("W, {0}", sw.ElapsedMilliseconds);
 
             databaseAll = g;
 
             FinalizeDBLoad();
+            Console.WriteLine("X, {0}", sw.ElapsedMilliseconds);
+
 
             NPCache.I.localDatabase = databaseAll;
             NPCache.I.types = types.ToList();
             NPCache.I.regions = regions.ToList();
             NPCache.I.Save(DateTime.Now);
+            Console.WriteLine("Y, {0}", sw.ElapsedMilliseconds);
             sync.Close();
+            Console.WriteLine("Z, {0}", sw.ElapsedMilliseconds);
         }
 
         private List<Item> GetDatabase(string type = "GAME")
@@ -581,7 +589,7 @@ namespace NPS
         // Download
         private void btnDownload_Click()
         {
-            if (string.IsNullOrEmpty(Settings.Instance.DownloadDir) || string.IsNullOrEmpty(Settings.Instance.PkgPath))
+            if (IsDownloadConfigIncorrect())
             {
                 MessageBox.Show("You don't have a proper configuration.", "Whoops!", MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
@@ -665,6 +673,11 @@ namespace NPS
                     StartDownload(a);
                 }
             }
+        }
+
+        private static bool IsDownloadConfigIncorrect()
+        {
+            return string.IsNullOrEmpty(Settings.Instance.DownloadDir) || string.IsNullOrEmpty(Settings.Instance.PkgPath);
         }
 
         /*
