@@ -18,9 +18,22 @@ namespace NPS
         // Avalonia configuration, don't remove; also used by visual designer.
         private static AppBuilder BuildAvaloniaApp()
             => AppBuilder.Configure<App>()
+#if PUBLISHWIN
+                .UseWin32()
+                .UseSkia()
+#elif PUBLISHLINUX
+                .UseX11()
+                .UseSkia()
+#elif PUBLISHOSX
+                .UseAvaloniaNative()
+                .UseSkia()
+#else
                 .UsePlatformDetect()
+                .UseSkia()
+#endif
                 .LogToDebug()
                 .UseReactiveUI();
+
 
         // Your application's entry point. Here you can initialize your MVVM framework, DI
         // container, etc.

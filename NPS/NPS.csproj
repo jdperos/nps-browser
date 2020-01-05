@@ -7,6 +7,9 @@
     <OutputType>exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <TrimmerRootAssembly Include="mscorlib" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Update="**\*.xaml.cs">
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -15,12 +18,37 @@
     </AvaloniaResource>
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
+
+  <PropertyGroup Condition="'$(PublishWin)' == 'True'">
+    <DefineConstants>$(DefineConstants);PUBLISHWIN</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(PublishLinux)' == 'True'">
+    <DefineConstants>$(DefineConstants);PUBLISHLINUX</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(PublishOsx)' == 'True'">
+    <DefineConstants>$(DefineConstants);PUBLISHOSX</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
+
     <PackageReference Include="Avalonia" Version="0.9.1" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="0.9.1" />
-    <PackageReference Include="Avalonia.Desktop" Version="0.9.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.9.1" Condition="'$(PublishWin)'!='True' AND '$(PublishLinux)'!='True' AND '$(PublishOsx)'!='True'" />
+
+    <PackageReference Include="Avalonia.Skia" Version="0.9.1" Condition="'$(PublishWin)'=='True' OR '$(PublishLinux)'=='True' OR '$(PublishOsx)'=='True'" />
+    <PackageReference Include="Avalonia.Win32" Version="0.9.1" Condition="'$(PublishWin)' == 'True' " />
+    <PackageReference Include="Avalonia.X11" Version="0.9.1" Condition="'$(PublishLinux)' == 'True' " />
+    <PackageReference Include="Avalonia.Native" Version="0.9.1" Condition="'$(PublishOsx)' == 'True' " />
+
     <PackageReference Include="Avalonia.ReactiveUI" Version="0.9.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+
+    <!--<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />-->
+
+    <PackageReference Include="System.Reactive" Version="4.3.2" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Assets" />
