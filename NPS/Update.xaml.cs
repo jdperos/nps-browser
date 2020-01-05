@@ -126,7 +126,7 @@ namespace NPS
         private static string GetUpdateLink(string title)
         {
             var url = "https://gs-sec.ww.np.dl.playstation.net/pl/np/{0}/{1}/{0}-ver.xml";
-            var key = "0x" + Settings.Instance.HmacKey;
+            var key = "0x" + Settings.HmacKey;
 
             var binary = new List<byte>();
             for (var i = 2; i < key.Length; i += 2)

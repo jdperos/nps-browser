@@ -1018,7 +1018,7 @@ namespace NPS
 
         private async void checkForPatchesToolStripMenuItem_Click()
         {
-            if (string.IsNullOrEmpty(Settings.Instance.HmacKey))
+            if (string.IsNullOrEmpty(Settings.HmacKey))
             {
                 MessageBox.Show("No hmackey");
                 return;
