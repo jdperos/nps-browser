@@ -11,7 +11,7 @@
         Title="NPS Browser">
 
     <DockPanel>
-        <Menu Margin="4" DockPanel.Dock="Top">
+        <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Name="OptionsMenuItem" Header="_Options">
                     <MenuItem.Icon>
