@@ -6,8 +6,8 @@
              x:Class="NPS.BrowseableUriEntry">
 
     <StackPanel Orientation="Horizontal">
-        <TextBlock Name="Label" VerticalAlignment="Center" MinWidth="75" />
-        <TextBox Name="TextBox" Margin="4, 0" MinWidth="300" />
+        <TextBlock Name="Label" IsVisible="False" VerticalAlignment="Center" MinWidth="75" Margin="0, 0, 4, 0" />
+        <TextBox Name="TextBox" Margin="0, 0, 4, 0" MinWidth="300" />
         <Button Name="BrowseButton" Content="Browse"/>
     </StackPanel>
 </UserControl>
