@@ -68,7 +68,6 @@ namespace NPS
             // Update URIs
             tb_psvupduri.Text = Settings.Instance.PsvUpdateUri;
             tb_ps4upduri.Text = Settings.Instance.Ps4UpdateUri;
-            hmacTB.Text = Settings.Instance.HmacKey;
             tb_compPack.Text = Settings.Instance.CompPackUrl;
             tb_compackPatch.Text = Settings.Instance.CompPackPatchUrl;
 
@@ -162,7 +161,6 @@ namespace NPS
             // Update URIs
             Settings.Instance.PsvUpdateUri = tb_psvupduri.Text;
             Settings.Instance.Ps4UpdateUri = tb_ps4upduri.Text;
-            Settings.Instance.HmacKey = hmacTB.Text;
             if (Settings.Instance.CompPackUrl != tb_compPack.Text ||
                 Settings.Instance.CompPackPatchUrl != tb_compackPatch.Text)
                 CompPack.compPackChanged = true;
@@ -261,7 +259,6 @@ namespace NPS
 
         private NumericUpDown simultaneousDl;
 
-        private TextBox hmacTB;
         private TextBox tb_compPack;
         private TextBox tb_compackPatch;
 
@@ -305,7 +302,6 @@ namespace NPS
             deleteAfterUnpack = this.FindControl<CheckBox>("deleteAfterUnpack");
             simultaneousDl = this.FindControl<NumericUpDown>("simultaneousDl");
 
-            hmacTB = this.FindControl<TextBox>("hmacTB");
             tb_compPack = this.FindControl<TextBox>("tb_compPack");
             tb_compackPatch = this.FindControl<TextBox>("tb_compackPatch");
 
