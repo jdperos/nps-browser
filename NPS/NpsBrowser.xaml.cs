@@ -158,24 +158,17 @@ namespace NPS
             var sync = new SyncDB {Owner = this};
             sync.Show();
 
-            var sw = new Stopwatch();
-            sw.Start();
             var g = await sync.Sync();
-            Console.WriteLine("W, {0}", sw.ElapsedMilliseconds);
 
             databaseAll = g;
 
             FinalizeDBLoad();
-            Console.WriteLine("X, {0}", sw.ElapsedMilliseconds);
-
 
             NPCache.I.localDatabase = databaseAll;
             NPCache.I.types = types.ToList();
             NPCache.I.regions = regions.ToList();
             NPCache.I.Save(DateTime.Now);
-            Console.WriteLine("Y, {0}", sw.ElapsedMilliseconds);
             sync.Close();
-            Console.WriteLine("Z, {0}", sw.ElapsedMilliseconds);
         }
 
         private List<Item> GetDatabase(string type = "GAME")
