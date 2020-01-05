@@ -28,7 +28,7 @@
                 <nps:BrowseableUriEntry Grid.Row="1" Grid.Column="2" Name="textPKGPath" />
 
                 <TextBlock Grid.Row="2" VerticalAlignment="Center" Text="Pkg dec params:" />
-                <TextBox Grid.Row="2" Grid.Column="2" Name="textParams" />
+                <TextBox Grid.Row="2" Grid.Column="2" Name="textParams" MinWidth="300" HorizontalAlignment="Left" />
 
                 <TextBlock Grid.Row="3" VerticalAlignment="Center" Text="Delete after unpack:" />
                 <CheckBox Grid.Row="3" Grid.Column="2" Name="deleteAfterUnpack" Margin="0, 1, 0, 0" />
