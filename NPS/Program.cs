@@ -1,5 +1,7 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Dialogs;
 using Avalonia.Logging.Serilog;
 using Avalonia.ReactiveUI;
 
@@ -17,7 +19,9 @@ namespace NPS
 
         // Avalonia configuration, don't remove; also used by visual designer.
         private static AppBuilder BuildAvaloniaApp()
-            => AppBuilder.Configure<App>()
+        {
+            var builder = AppBuilder.Configure<App>()
+                // Doing these #if switches manually means we don't include unnecessary assemblies for publish.
 #if PUBLISHWIN
                 .UseWin32()
                 .UseSkia()
@@ -33,6 +37,16 @@ namespace NPS
 #endif
                 .LogToDebug()
                 .UseReactiveUI();
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                // Native system dialogs are broken on Linux right now with Avalonia.
+                // I hear Skiasharp has a fix for this but let's just wait.
+                builder.UseManagedSystemDialogs();
+            }
+
+            return builder;
+        }
 
 
         // Your application's entry point. Here you can initialize your MVVM framework, DI
