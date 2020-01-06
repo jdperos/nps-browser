@@ -15,7 +15,7 @@ public class Settings
     // Settings
     public string PkgPath { get; set; }
     public string PkgParams { get; set; } = "-x {pkgFile} \"{zRifKey}\"";
-    public bool DeleteAfterUnpack { get; set; } = false;
+    public bool DeleteAfterUnpack { get; set; } = true;
     public int SimultaneousDl { get; set; } = 2;
 
     // Game URIs
