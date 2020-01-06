@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -8,79 +9,76 @@ using Avalonia.Threading;
 
 namespace NPS
 {
+    // ReSharper disable once InconsistentNaming
     public class SyncDB : Window
     {
-        private int dbCounter = 0; //17
+        private int _dbCounter;
+        private int _counterMax;
 
         public SyncDB()
         {
             InitializeComponent();
 
-            progressBar1.Maximum = (17 + 1) * 100;
         }
 
-        public Task<List<Item>> Sync()
+        public async Task<List<Item>> Sync()
         {
             // TODO: Does Avalonia support this?
             //this.TopMost = true;
 
-            return Task.Run(async () =>
+            var tasks = new[]
             {
-                var games = new List<Item>();
-                var dlcs = new List<Item>();
+                // LoadDatabase(Settings.Instance.PsvUpdateUri, DatabaseType.VitaUpdate),
+                // LoadDatabase(Settings.Instance.Ps4UpdateUri, DatabaseType.PS4Update),
 
-                await LoadDatabase(Settings.Instance.PsvUpdateUri, DatabaseType.VitaUpdate);
-                await LoadDatabase(Settings.Instance.Ps4UpdateUri, DatabaseType.PS4Update);
+                LoadDatabase(Settings.Instance.PsvUri, DatabaseType.Vita),
+                LoadDatabase(Settings.Instance.PsmUri, DatabaseType.ItsPsm),
+                LoadDatabase(Settings.Instance.PsxUri, DatabaseType.ItsPSX),
+                LoadDatabase(Settings.Instance.PspUri, DatabaseType.PSP),
+                LoadDatabase(Settings.Instance.Ps3Uri, DatabaseType.PS3),
+                LoadDatabase(Settings.Instance.Ps4Uri, DatabaseType.PS4),
 
-                games.AddRange(await LoadDatabase(Settings.Instance.PsvThemeUri, DatabaseType.VitaTheme));
-                await LoadDatabase(Settings.Instance.PspThemeUri, DatabaseType.PSPTheme);
-                await LoadDatabase(Settings.Instance.Ps3ThemeUri, DatabaseType.PS3Theme);
-                await LoadDatabase(Settings.Instance.Ps4ThemeUri, DatabaseType.PS4Theme);
+                LoadDatabase(Settings.Instance.PsvDlcUri, DatabaseType.VitaDLC),
+                LoadDatabase(Settings.Instance.PspDlcUri, DatabaseType.PSPDLC),
+                LoadDatabase(Settings.Instance.Ps3DlcUri, DatabaseType.PS3DLC),
+                LoadDatabase(Settings.Instance.Ps4DlcUri, DatabaseType.PS4DLC),
 
-                dlcs.AddRange(await LoadDatabase(Settings.Instance.PsvDlcUri, DatabaseType.VitaDLC));
-                dlcs.AddRange(await LoadDatabase(Settings.Instance.PspDlcUri, DatabaseType.PSPDLC));
-                dlcs.AddRange(await LoadDatabase(Settings.Instance.Ps3DlcUri, DatabaseType.PS3DLC));
-                dlcs.AddRange(await LoadDatabase(Settings.Instance.Ps4DlcUri, DatabaseType.PS4DLC));
+                LoadDatabase(Settings.Instance.PsvThemeUri, DatabaseType.VitaTheme),
+                // LoadDatabase(Settings.Instance.Ps3AvatarUri, DatabaseType.PS3Avatar),
+                // LoadDatabase(Settings.Instance.PspThemeUri, DatabaseType.PSPTheme),
+                // oadDatabase(Settings.Instance.Ps3ThemeUri, DatabaseType.PS3Theme),
+                // LoadDatabase(Settings.Instance.Ps4ThemeUri, DatabaseType.PS4Theme)
+            };
 
-                await LoadDatabase(Settings.Instance.Ps3AvatarUri, DatabaseType.PS3Avatar);
+            _counterMax = tasks.Length;
+            progressBar1.Maximum = (_counterMax + 1) * 100;
 
-                games.AddRange(await LoadDatabase(Settings.Instance.PsvUri, DatabaseType.Vita));
-                games.AddRange(await LoadDatabase(Settings.Instance.PsmUri, DatabaseType.ItsPsm));
-                games.AddRange(await LoadDatabase(Settings.Instance.PsxUri, DatabaseType.ItsPSX));
-                games.AddRange(await LoadDatabase(Settings.Instance.PspUri, DatabaseType.PSP));
-                games.AddRange(await LoadDatabase(Settings.Instance.Ps3Uri, DatabaseType.PS3));
-                games.AddRange(await LoadDatabase(Settings.Instance.Ps4Uri, DatabaseType.PS4));
-
-                games.AddRange(dlcs);
-
-                return games;
-            });
+            return (await Task.WhenAll(tasks)).SelectMany(p => p).ToList();
         }
 
-        private Task<List<Item>> LoadDatabase(string path, DatabaseType dbType)
+        private async Task<List<Item>> LoadDatabase(string path, DatabaseType dbType)
         {
-            dbCounter++;
-
             var dbs = new List<Item>();
             if (string.IsNullOrEmpty(path))
-                return Task.FromResult(dbs);
+            {
+                OneDownloadDone();
+                return dbs;
+            }
 
-            return Task.Run(async () =>
+            using var wc = new WebClient
+            {
+                Encoding = System.Text.Encoding.UTF8,
+                Proxy = Settings.Instance.Proxy
+            };
+
+            var content = await wc.DownloadStringTaskAsync(new Uri(path));
+
+            await Task.Run(() =>
             {
                 path = new Uri(path).ToString();
 
                 try
                 {
-                    using var wc = new WebClient
-                    {
-                        Encoding = System.Text.Encoding.UTF8,
-                        Proxy = Settings.Instance.Proxy
-                    };
-
-                    wc.DownloadProgressChanged += Wc_DownloadProgressChanged;
-                    var content = await wc.DownloadStringTaskAsync(new Uri(path));
-                    //content = Encoding.UTF8.GetString(Encoding.Default.GetBytes(content));
-
                     var lines = content.Split(new[] {"\r\n", "\n\r", "\n", "\r"}, StringSplitOptions.None);
 
                     for (int i = 1; i < lines.Length; i++)
@@ -92,7 +90,7 @@ namespace NPS
                             continue;
                         }
 
-                        var itm = new Item()
+                        var itm = new Item
                         {
                             TitleId = a[0],
                             Region = a[1],
@@ -102,164 +100,146 @@ namespace NPS
                             ContentId = a[5],
                         };
 
-                        // PSV
-                        if (dbType == DatabaseType.Vita)
+                        switch (dbType)
                         {
-                            itm.contentType = "VITA";
+                            // PSV
+                            case DatabaseType.Vita:
+                                itm.contentType = "VITA";
 
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
-                        else if (dbType == DatabaseType.VitaDLC)
-                        {
-                            itm.contentType = "VITA";
-                            itm.IsDLC = true;
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            case DatabaseType.VitaDLC:
+                                itm.contentType = "VITA";
+                                itm.IsDLC = true;
 
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
-                        else if (dbType == DatabaseType.VitaTheme)
-                        {
-                            itm.contentType = "VITA";
-                            itm.IsTheme = true;
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
-                        else if (dbType == DatabaseType.VitaUpdate)
-                        {
-                            itm.contentType = "VITA";
-                            itm.IsUpdate = true;
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            case DatabaseType.VitaTheme:
+                                itm.contentType = "VITA";
+                                itm.IsTheme = true;
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            case DatabaseType.VitaUpdate:
+                                itm.contentType = "VITA";
+                                itm.IsUpdate = true;
 
-                            itm.ContentId = null;
-                            itm.zRif = "";
-                            itm.TitleName = a[2] + " (" + a[3] + ")";
-                            itm.pkg = a[5];
-                            DateTime.TryParse(a[7], out itm.lastModifyDate);
-                        }
+                                itm.ContentId = null;
+                                itm.zRif = "";
+                                itm.TitleName = a[2] + " (" + a[3] + ")";
+                                itm.pkg = a[5];
+                                DateTime.TryParse(a[7], out itm.lastModifyDate);
+                                break;
+                            // PSP
+                            case DatabaseType.PSP:
+                                itm.ItsPsp = true;
+                                itm.contentType = "PSP";
 
-                        // PSP
-                        else if (dbType == DatabaseType.PSP)
-                        {
-                            itm.ItsPsp = true;
-                            itm.contentType = "PSP";
+                                itm.contentType = a[2];
+                                itm.TitleName = a[3];
+                                itm.pkg = a[4];
+                                itm.ContentId = a[5];
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                itm.zRif = a[7];
+                                break;
+                            case DatabaseType.PSPDLC:
+                                itm.ItsPsp = true;
+                                itm.contentType = "PSP";
+                                itm.IsDLC = true;
 
-                            itm.contentType = a[2];
-                            itm.TitleName = a[3];
-                            itm.pkg = a[4];
-                            itm.ContentId = a[5];
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                            itm.zRif = a[7];
-                        }
-                        else if (dbType == DatabaseType.PSPDLC)
-                        {
-                            itm.ItsPsp = true;
-                            itm.contentType = "PSP";
-                            itm.IsDLC = true;
+                                itm.ContentId = a[4];
+                                DateTime.TryParse(a[5], out itm.lastModifyDate);
+                                itm.zRif = a[6];
+                                break;
+                            case DatabaseType.PSPTheme:
+                                itm.ItsPsp = true;
+                                itm.contentType = "PSP";
+                                itm.IsTheme = true;
 
-                            itm.ContentId = a[4];
-                            DateTime.TryParse(a[5], out itm.lastModifyDate);
-                            itm.zRif = a[6];
-                        }
-                        else if (dbType == DatabaseType.PSPTheme)
-                        {
-                            itm.ItsPsp = true;
-                            itm.contentType = "PSP";
-                            itm.IsTheme = true;
+                                itm.zRif = "";
+                                itm.ContentId = a[4];
+                                DateTime.TryParse(a[5], out itm.lastModifyDate);
+                                break;
+                            // PS3
+                            case DatabaseType.PS3:
+                                itm.contentType = "PS3";
+                                itm.ItsPS3 = true;
 
-                            itm.zRif = "";
-                            itm.ContentId = a[4];
-                            DateTime.TryParse(a[5], out itm.lastModifyDate);
-                        }
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            case DatabaseType.PS3Avatar:
+                                itm.ItsPS3 = true;
+                                itm.contentType = "PS3";
+                                itm.IsAvatar = true;
 
-                        // PS3
-                        else if (dbType == DatabaseType.PS3)
-                        {
-                            itm.contentType = "PS3";
-                            itm.ItsPS3 = true;
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            case DatabaseType.PS3DLC:
+                                itm.ItsPS3 = true;
+                                itm.contentType = "PS3";
+                                itm.IsDLC = true;
 
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
-                        else if (dbType == DatabaseType.PS3Avatar)
-                        {
-                            itm.ItsPS3 = true;
-                            itm.contentType = "PS3";
-                            itm.IsAvatar = true;
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            // PS4
+                            case DatabaseType.PS3Theme:
+                                itm.ItsPS3 = true;
+                                itm.contentType = "PS3";
+                                itm.IsTheme = true;
 
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
-                        else if (dbType == DatabaseType.PS3DLC)
-                        {
-                            itm.ItsPS3 = true;
-                            itm.contentType = "PS3";
-                            itm.IsDLC = true;
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            case DatabaseType.PS4:
+                                itm.ItsPS4 = true;
+                                itm.contentType = "PS4";
 
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
-                        else if (dbType == DatabaseType.PS3Theme)
-                        {
-                            itm.ItsPS3 = true;
-                            itm.contentType = "PS3";
-                            itm.IsTheme = true;
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            case DatabaseType.PS4DLC:
+                                itm.ItsPS4 = true;
+                                itm.contentType = "PS4";
+                                itm.IsDLC = true;
 
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            case DatabaseType.PS4Theme:
+                                itm.ItsPS4 = true;
+                                itm.contentType = "PS4";
+                                itm.IsTheme = true;
 
-                        // PS4
-                        else if (dbType == DatabaseType.PS4)
-                        {
-                            itm.ItsPS4 = true;
-                            itm.contentType = "PS4";
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            case DatabaseType.PS4Update:
+                                itm.ItsPS4 = true;
+                                itm.contentType = "PS4";
+                                itm.IsUpdate = true;
 
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
-                        else if (dbType == DatabaseType.PS4DLC)
-                        {
-                            itm.ItsPS4 = true;
-                            itm.contentType = "PS4";
-                            itm.IsDLC = true;
+                                itm.ContentId = null;
+                                itm.zRif = "";
+                                itm.TitleName = $"{a[2]} ({a[3]})";
+                                itm.pkg = a[5];
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            // Others
+                            case DatabaseType.ItsPsm:
+                                itm.contentType = "PSM";
 
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
-                        else if (dbType == DatabaseType.PS4Theme)
-                        {
-                            itm.ItsPS4 = true;
-                            itm.contentType = "PS4";
-                            itm.IsTheme = true;
+                                itm.ContentId = null;
+                                DateTime.TryParse(a[6], out itm.lastModifyDate);
+                                break;
+                            case DatabaseType.ItsPSX:
+                                itm.contentType = "PSX";
+                                itm.ItsPsx = true;
 
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
-                        else if (dbType == DatabaseType.PS4Update)
-                        {
-                            itm.ItsPS4 = true;
-                            itm.contentType = "PS4";
-                            itm.IsUpdate = true;
-
-                            itm.ContentId = null;
-                            itm.zRif = "";
-                            itm.TitleName = a[2] + " (" + a[3] + ")";
-                            itm.pkg = a[5];
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
-
-                        // Others
-                        else if (dbType == DatabaseType.ItsPsm)
-                        {
-                            itm.contentType = "PSM";
-
-                            itm.ContentId = null;
-                            DateTime.TryParse(a[6], out itm.lastModifyDate);
-                        }
-                        else if (dbType == DatabaseType.ItsPSX)
-                        {
-                            itm.contentType = "PSX";
-                            itm.ItsPsx = true;
-
-                            itm.zRif = "";
-                            itm.ContentId = a[4];
-                            DateTime.TryParse(a[5], out itm.lastModifyDate);
+                                itm.zRif = "";
+                                itm.ContentId = a[4];
+                                DateTime.TryParse(a[5], out itm.lastModifyDate);
+                                break;
                         }
 
-                        if ((itm.pkg.ToLower().Contains("http://") || itm.pkg.ToLower().Contains("https://")) &&
-                            !itm.zRif.ToLower().Contains("missing"))
+                        if ((itm.pkg.Contains("http://", StringComparison.OrdinalIgnoreCase) || itm.pkg.Contains("https://", StringComparison.OrdinalIgnoreCase)) &&
+                            !itm.zRif.Contains("missing", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (itm.zRif.ToLower().Contains("not required")) itm.zRif = "";
+                            if (itm.zRif.Contains("not required", StringComparison.OrdinalIgnoreCase)) itm.zRif = "";
 
 
                             itm.Region = itm.Region.Replace(" ", "");
@@ -269,22 +249,22 @@ namespace NPS
                 }
                 catch (Exception err)
                 {
+                    Console.WriteLine("Failed while loading database {0}:\n{1}", dbType, err);
                 }
-
-                return dbs;
             });
+
+            OneDownloadDone();
+
+            return dbs;
         }
 
-        private void Wc_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        private void OneDownloadDone()
         {
-            //progressBar1.Maximum = e.TotalBytesToReceive;
-            try
+            Dispatcher.UIThread.Post(() =>
             {
-                Dispatcher.UIThread.Post(() => { progressBar1.Value = e.ProgressPercentage + (dbCounter * 100); });
-            }
-            catch
-            {
-            }
+                _dbCounter += 1;
+                progressBar1.Value = _dbCounter * 100;
+            });
         }
 
         // ReSharper disable once InconsistentNaming

@@ -1,74 +1,77 @@
-﻿using NPS.Helpers;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
-[System.Serializable]
-public class NPCache
+namespace NPS.Helpers
 {
-
-    public static NPCache I
+    [System.Serializable]
+    public class NPCache
     {
-        get
+        private const string Path = "nps.cache";
+
+        public static NPCache I
         {
-            if (_i == null)
+            get
             {
-                Load();
+                if (_i == null)
+                {
+                    Load();
+                }
+
+                return _i;
             }
-            return _i;
         }
-    }
 
-    private bool _cacheInvalid = false;
+        private bool _cacheInvalid;
 
-    public bool IsCacheIsInvalid { get { return _cacheInvalid || this.UpdateDate > System.DateTime.Now.AddDays(-4); } }
+        public bool IsCacheIsInvalid => _cacheInvalid || UpdateDate > System.DateTime.Now.AddDays(-4);
 
-    private static NPCache _i;
-    public const int ver = 1;
-    public System.DateTime UpdateDate;
-    public List<NPS.Item> localDatabase = new List<NPS.Item>();
-    public List<string> regions = new List<string>(), types = new List<string>();
-    public List<Renascene> renasceneCache = new List<Renascene>();
-    private static string path = "nps.cache";
+        private static NPCache _i;
 
-    public static void Load()
-    {
-        if (System.IO.File.Exists(path))
+        public System.DateTime UpdateDate;
+        public List<Item> localDatabase = new List<Item>();
+        public List<Renascene> renasceneCache = new List<Renascene>();
+
+        public static void Load()
         {
-            var stream = File.OpenRead(path);
-            var formatter = new BinaryFormatter();
-            _i = (NPCache)formatter.Deserialize(stream);
-            if (_i.renasceneCache == null) _i.renasceneCache = new List<Renascene>();
-            stream.Close();
+            try
+            {
+                using var stream = File.OpenRead(Path);
+                var formatter = new BinaryFormatter();
+                _i = (NPCache) formatter.Deserialize(stream);
+                _i.renasceneCache ??= new List<Renascene>();
+                return;
+            }
+            catch (SerializationException)
+            {
+                // Nada.
+            }
+
+            _i = new NPCache(System.DateTime.MinValue);
         }
-        else _i = new NPCache(System.DateTime.MinValue);
-    }
 
-    public void InvalidateCache()
-    {
-        _cacheInvalid = true;
-    }
+        public void InvalidateCache()
+        {
+            _cacheInvalid = true;
+        }
 
-    public void Save(System.DateTime updateDate)
-    {
-        this.UpdateDate = updateDate;
-        Save();
-    }
-    public void Save()
-    {
-        using var stream = File.Create(path);
-        var formatter = new BinaryFormatter();
-        formatter.Serialize(stream, this);
-    }
+        public void Save(System.DateTime updateDate)
+        {
+            UpdateDate = updateDate;
+            Save();
+        }
 
-    public NPCache(System.DateTime creationDate)
-    {
-        this.UpdateDate = creationDate;
+        public void Save()
+        {
+            using var fileStream = File.Create(Path);
+            var formatter = new BinaryFormatter();
+            formatter.Serialize(fileStream, this);
+        }
+
+        public NPCache(System.DateTime creationDate)
+        {
+            UpdateDate = creationDate;
+        }
     }
-
-
 }
-
-
-
-

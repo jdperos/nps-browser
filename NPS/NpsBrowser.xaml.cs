@@ -102,7 +102,6 @@ namespace NPS
 
             _timer1.Start();
 
-
             if (IsDownloadConfigIncorrect())
             {
                 await MessageBox.ShowAsync(this,
@@ -142,8 +141,6 @@ namespace NPS
             if (NPCache.I.IsCacheIsInvalid)
             {
                 databaseAll = NPCache.I.localDatabase;
-                types = new HashSet<string>(NPCache.I.types);
-                regions = new HashSet<string>(NPCache.I.regions);
 
                 FinalizeDBLoad();
             }
@@ -165,8 +162,6 @@ namespace NPS
             FinalizeDBLoad();
 
             NPCache.I.localDatabase = databaseAll;
-            NPCache.I.types = types.ToList();
-            NPCache.I.regions = regions.ToList();
             NPCache.I.Save(DateTime.Now);
             sync.Close();
         }
@@ -187,19 +182,24 @@ namespace NPS
         {
             //var tempList = new List<Item>(dlcsDbs);
             //tempList.AddRange(gamesDbs);
-            rbnDLC.IsEnabled = false;
-            rbnGames.IsEnabled = false;
+
+            var foundDlc = false;
+            var foundGame = false;
+            var foundTheme = false;
 
             foreach (var itm in databaseAll)
             {
                 regions.Add(itm.Region);
                 types.Add(itm.contentType);
 
-                if (itm.IsDLC) rbnDLC.IsEnabled = true;
-                else rbnGames.IsEnabled = true;
-                if (itm.IsTheme) rbnThemes.IsEnabled = true;
+                if (itm.IsDLC) foundDlc = true;
+                else foundGame = true;
+                if (itm.IsTheme) foundTheme = true;
             }
 
+            rbnDLC.IsEnabled = foundDlc;
+            rbnGames.IsEnabled = foundGame;
+            rbnThemes.IsEnabled = foundTheme;
 
             rbnAvatars.IsEnabled = avatarsDbs.Count > 0;
             rbnUpdates.IsEnabled = updatesDbs.Count > 0;
@@ -211,13 +211,11 @@ namespace NPS
             cmbType.Items.Clear();
             cmbRegion.Items.Clear();
 
-
-            foreach (string s in types)
+            foreach (var s in types)
                 cmbType.Items.Add(s);
 
-            foreach (string s in regions)
+            foreach (var s in regions)
                 cmbRegion.Items.Add(s);
-
 
             int countSelected = Settings.Instance.SelectedRegions.Count;
             foreach (var a in cmbRegion.CheckBoxItems)
@@ -249,14 +247,37 @@ namespace NPS
                 }
             }
 
-            var dlcsDbs = GetDatabase("DLC").ToArray();
+            var dlcsDbs = GetDatabase("DLC");
 
-            foreach (var itm in databaseAll)
+            var dlcDict = new Dictionary<(string region, string titleId), List<Item>>();
+
+            // Calculate DLC counts.
+            foreach (var dlc in dlcsDbs)
             {
-                if (!itm.IsAvatar && !itm.IsDLC && !itm.IsTheme && !itm.IsUpdate && !itm.ItsPsx)
-                    //if (dbType == DatabaseType.Vita || dbType == DatabaseType.PSP || dbType == DatabaseType.PS3 || dbType == DatabaseType.PS4)
-                    itm.CalculateDlCs(dlcsDbs);
+                var key = (dlc.Region, dlc.TitleId);
+
+                if (!dlcDict.TryGetValue(key, out var list))
+                {
+                    list = new List<Item>();
+                    dlcDict.Add(key, list);
+                }
+
+                list.Add(dlc);
             }
+
+            foreach (var gameItem in databaseAll)
+            {
+                if (gameItem.IsAvatar || gameItem.IsDLC || gameItem.IsTheme || gameItem.IsUpdate || gameItem.ItsPsx)
+                {
+                    continue;
+                }
+
+                if (dlcDict.TryGetValue((gameItem.Region, gameItem.TitleId), out var dlcs))
+                {
+                    gameItem.DlcItm = dlcs;
+                }
+            }
+
             // Populate DLC Parent Titles
             //var gamesDb = GetDatabase();
             //var dlcDb = GetDatabase(true);
@@ -268,6 +289,7 @@ namespace NPS
 
             cmbRegion.CheckBoxCheckedChanged += (sender, e) => txtSearch_TextChanged();
             cmbType.CheckBoxCheckedChanged += (sender, e) => txtSearch_TextChanged();
+
             txtSearch_TextChanged();
         }
 
@@ -328,9 +350,10 @@ namespace NPS
                 if (Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
                 {
                     int newdlc = 0;
-                    foreach (var i in item.DlcItm)
-                        if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(i))
-                            newdlc++;
+                    if (item.DlcItm != null)
+                        foreach (var i in item.DlcItm)
+                            if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(i))
+                                newdlc++;
 
                     if (newdlc > 0) a.BackColor = Color.Parse("#E700E7");
                     else a.BackColor = Color.Parse("#B7FF7C");
@@ -400,7 +423,6 @@ namespace NPS
                     Settings.Instance.SelectedTypes.Add(a.Content as string);
 
             Settings.Instance.Save();
-            NPCache.I.Save();
         }
 
         // Menu
@@ -424,74 +446,89 @@ namespace NPS
 
         public void updateSearch()
         {
-            var itms = new List<Item>();
+            var items = new List<Item>();
             var splitStr = txtSearch.Text?.Split(' ') ?? Array.Empty<string>();
 
             foreach (var item in currentDatabase)
             {
-                bool dirty = false;
-
-
-                foreach (String i in splitStr)
+                foreach (var i in splitStr)
                 {
-                    if (i.Length == 0) continue;
-                    if (i.StartsWith("-") == true)
+                    if (i.StartsWith("-"))
                     {
-                        if ((item.TitleName.ToLower().Contains(i.Substring(1).ToLower()) == true) ||
-                            (item.ContentId.ToLower().Contains(i.Substring(1).ToLower()) == true))
+                        var sub = i.AsSpan()[1..];
+
+                        if (item.TitleName.AsSpan().Contains(sub, StringComparison.OrdinalIgnoreCase) ||
+                            item.ContentId.AsSpan().Contains(sub, StringComparison.OrdinalIgnoreCase))
                         {
-                            dirty = true;
-                            break;
+                            goto notFound;
                         }
                     }
-                    else if ((item.TitleName.ToLower().Contains(i.ToLower()) == false) &&
-                             (item.TitleId.ToLower().Contains(i.ToLower()) == false))
+                    else if (!item.TitleName.Contains(i, StringComparison.OrdinalIgnoreCase) &&
+                             !item.TitleId.Contains(i, StringComparison.OrdinalIgnoreCase))
                     {
-                        dirty = true;
-                        break;
+                        goto notFound;
                     }
                 }
 
-
-                if (dirty == false)
+                if (rbnDLC.IsChecked == true)
                 {
-                    if (rbnDLC.IsChecked == true)
+                    if (rbnUndownloaded.IsChecked == true &&
+                        Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
                     {
-                        if ((rbnUndownloaded.IsChecked == true) &&
-                            (Settings.Instance.HistoryInstance.completedDownloading.Contains(item))) dirty = true;
-                        if ((rbnDownloaded.IsChecked == true) &&
-                            (!Settings.Instance.HistoryInstance.completedDownloading.Contains(item))) dirty = true;
+                        continue;
                     }
-                    else
+
+                    if (rbnDownloaded.IsChecked == true &&
+                        !Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
                     {
-                        if ((!Settings.Instance.HistoryInstance.completedDownloading.Contains(item)) &&
-                            (rbnDownloaded.IsChecked == true)) dirty = true;
-                        else if (Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(item) &&
+                        rbnDownloaded.IsChecked == true)
+                    {
+                        continue;
+                    }
+
+                    if (Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
+                    {
+                        if (rbnUndownloaded.IsChecked == true && chkUnless.IsChecked == false)
                         {
-                            if ((rbnUndownloaded.IsChecked == true) && (chkUnless.IsChecked == false)) dirty = true;
+                            continue;
+                        }
 
-                            else if ((rbnUndownloaded.IsChecked == true) && (chkUnless.IsChecked == true))
-                            {
-                                int newDLC = 0;
+                        else if (rbnUndownloaded.IsChecked == true && chkUnless.IsChecked == true)
+                        {
+                            int newDLC = 0;
 
+                            if (item.DlcItm != null)
                                 foreach (var item2 in item.DlcItm)
                                 {
                                     if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(item2))
                                         newDLC++;
                                 }
 
-                                if (newDLC == 0) dirty = true;
+                            if (newDLC == 0)
+                            {
+                                continue;
                             }
                         }
                     }
                 }
 
-                if ((dirty == false) && ContainsCmbBox(cmbRegion, item.Region) &&
+                if (ContainsCmbBox(cmbRegion, item.Region) &&
                     ContainsCmbBox(cmbType, item.contentType)
-                ) /*(cmbRegion.Text == "ALL" || item.Region.Contains(cmbRegion.Text)))*/ itms.Add(item);
+                ) /*(cmbRegion.Text == "ALL" || item.Region.Contains(cmbRegion.Text)))*/
+                {
+                    items.Add(item);
+                }
+
+                notFound: ;
             }
 
-            RefreshList(itms);
+            RefreshList(items);
         }
 
 
@@ -670,7 +707,8 @@ namespace NPS
 
         private static bool IsDownloadConfigIncorrect()
         {
-            return string.IsNullOrEmpty(Settings.Instance.DownloadDir) || string.IsNullOrEmpty(Settings.Instance.PkgPath);
+            return string.IsNullOrEmpty(Settings.Instance.DownloadDir) ||
+                   string.IsNullOrEmpty(Settings.Instance.PkgPath);
         }
 
         /*
@@ -748,6 +786,11 @@ namespace NPS
             foreach (TitleEntry itm in lstTitles.SelectedItems)
             {
                 var parrent = itm.Item;
+
+                if (parrent.DlcItm == null)
+                {
+                    continue;
+                }
 
                 foreach (var a in parrent.DlcItm)
                 {
@@ -914,7 +957,11 @@ namespace NPS
                             lnkOpenRenaScene.Visible = true;
                         }));
                     }
-                    else
+                }
+                else
+                {
+                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(item) &&
+                        rbnDownloaded.IsChecked == true)
                     {
                         Invoke(new Action(() =>
                         {
@@ -1312,7 +1359,9 @@ namespace NPS
         public string Region { get; set; }
         public string TitleName { get; set; }
         public string ContentType { get; set; }
+
         public string DLCs { get; set; }
+
         // Used for sorting.
         public int DlcCount { get; set; }
         public DateTime LastModifiedTime { get; set; }
