@@ -4,7 +4,7 @@
     <AssemblyName>NPS_Browser</AssemblyName>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <LangVersion>8</LangVersion>
-    <OutputType>exe</OutputType>
+    <OutputType>WinExe</OutputType>
   </PropertyGroup>
   <ItemGroup>
     <TrimmerRootAssembly Include="mscorlib" />
