@@ -179,8 +179,11 @@ namespace NPS
             }
             catch (WebException error)
             {
-                MessageBox.Show("Unknown error");
+                var response = (error.Response as HttpWebResponse);
+                if (response != null && response.StatusCode == HttpStatusCode.NotFound) {}
+                else MessageBox.Show("Unknown error");
                 Console.WriteLine(error);
+
                 this.Close();
             }
             catch (Exception err)
