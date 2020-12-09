@@ -1086,44 +1086,47 @@ namespace NPS
             }
 
             if (lstTitles.SelectedItems.Count == 0) return;
-
-            var item = ((TitleEntry) lstTitles.SelectedItems[0]).Item;
-
-            var gp = new GamePatches(item);
-
-            var newItem = await gp.AskForUpdate(this);
-
-            if (newItem == null)
+            foreach (var entry in lstTitles.SelectedItems)
             {
-                return;
-            }
+                var item = ((TitleEntry) entry).Item;
 
-            StartDownload(newItem);
+                var gp = new GamePatches(item);
+
+                var newItem = await gp.AskForUpdate(this);
+
+                if (newItem == null)
+                {
+                    continue;
+                }
+
+                StartDownload(newItem);
+            }
         }
 
         private async void checkForPatchesAndDownload()
         {
+
             if (string.IsNullOrEmpty(Settings.HmacKey))
             {
                 MessageBox.Show("No hmackey");
                 return;
             }
 
-            if (lstTitles.SelectedItems.Count == 0) return;
-
-            var item = ((TitleEntry) lstTitles.SelectedItems[0]).Item;
-
-            var gp = new GamePatches(item);
-
-            //var newItem = await gp.AskForUpdate(this);
-            var newItem = await gp.DownloadUpdateNoAsk(this);
-
-            if (newItem == null)
+            foreach (var entry in lstTitles.SelectedItems)
             {
-                return;
-            }
+                var item = ((TitleEntry) entry).Item;
 
-            StartDownload(newItem);
+                var gp = new GamePatches(item);
+
+                var newItem = await gp.DownloadUpdateNoAsk(this);
+
+                if (newItem == null)
+                {
+                    continue;
+                }
+
+                StartDownload(newItem);
+            }
         }
 
         private void StartDownload(Item newItem)
