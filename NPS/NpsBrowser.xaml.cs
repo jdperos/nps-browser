@@ -447,85 +447,96 @@ namespace NPS
         public void updateSearch()
         {
             var items = new List<Item>();
-            var splitStr = txtSearch.Text?.Split(' ') ?? Array.Empty<string>();
+            var entries = txtSearch.Text?.Split('|') ?? Array.Empty<string>();
 
             foreach (var item in currentDatabase)
             {
-                foreach (var i in splitStr)
+                if(entries.Length != 0)
                 {
-                    if (i.StartsWith("-"))
+                    foreach (var entry in entries)
                     {
-                        var sub = i.AsSpan()[1..];
-
-                        if (item.TitleName.AsSpan().Contains(sub, StringComparison.OrdinalIgnoreCase) ||
-                            item.ContentId.AsSpan().Contains(sub, StringComparison.OrdinalIgnoreCase))
+                        var splitStr = entry?.Split(' ') ?? Array.Empty<string>();
+                        foreach (var i in splitStr)
                         {
-                            goto notFound;
-                        }
-                    }
-                    else if (!item.TitleName.Contains(i, StringComparison.OrdinalIgnoreCase) &&
-                             !item.TitleId.Contains(i, StringComparison.OrdinalIgnoreCase))
-                    {
-                        goto notFound;
-                    }
-                }
+                            if (i.StartsWith("-"))
+                            {
+                                var sub = i.AsSpan()[1..];
 
-                if (rbnDLC.IsChecked == true)
-                {
-                    if (rbnUndownloaded.IsChecked == true &&
-                        Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
-                    {
-                        continue;
-                    }
-
-                    if (rbnDownloaded.IsChecked == true &&
-                        !Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
-                    {
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(item) &&
-                        rbnDownloaded.IsChecked == true)
-                    {
-                        continue;
-                    }
-
-                    if (Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
-                    {
-                        if (rbnUndownloaded.IsChecked == true && chkUnless.IsChecked == false)
-                        {
-                            continue;
-                        }
-
-                        else if (rbnUndownloaded.IsChecked == true && chkUnless.IsChecked == true)
-                        {
-                            int newDLC = 0;
-
-                            if (item.DlcItm != null)
-                                foreach (var item2 in item.DlcItm)
+                                if (item.TitleName.AsSpan().Contains(sub, StringComparison.OrdinalIgnoreCase) ||
+                                    item.ContentId.AsSpan().Contains(sub, StringComparison.OrdinalIgnoreCase))
                                 {
-                                    if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(item2))
-                                        newDLC++;
+                                    goto notFound;
                                 }
+                            }
+                            else if (!item.TitleName.Contains(i, StringComparison.OrdinalIgnoreCase) &&
+                                    !item.TitleId.Contains(i, StringComparison.OrdinalIgnoreCase))
+                            {
+                                goto notFound;
+                            }
+                        }
 
-                            if (newDLC == 0)
+                        if (rbnDLC.IsChecked == true)
+                        {
+                            if (rbnUndownloaded.IsChecked == true &&
+                                Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
+                            {
+                                continue;
+                            }
+
+                            if (rbnDownloaded.IsChecked == true &&
+                                !Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
                             {
                                 continue;
                             }
                         }
+                        else
+                        {
+                            if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(item) &&
+                                rbnDownloaded.IsChecked == true)
+                            {
+                                continue;
+                            }
+
+                            if (Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
+                            {
+                                if (rbnUndownloaded.IsChecked == true && chkUnless.IsChecked == false)
+                                {
+                                    continue;
+                                }
+
+                                else if (rbnUndownloaded.IsChecked == true && chkUnless.IsChecked == true)
+                                {
+                                    int newDLC = 0;
+
+                                    if (item.DlcItm != null)
+                                        foreach (var item2 in item.DlcItm)
+                                        {
+                                            if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(item2))
+                                                newDLC++;
+                                        }
+
+                                    if (newDLC == 0)
+                                    {
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (ContainsCmbBox(cmbRegion, item.Region) &&
+                            ContainsCmbBox(cmbType, item.contentType)
+                        ) /*(cmbRegion.Text == "ALL" || item.Region.Contains(cmbRegion.Text)))*/
+                        {
+                            items.Add(item);
+                        }
+
+                        notFound: ;                    
                     }
                 }
-
-                if (ContainsCmbBox(cmbRegion, item.Region) &&
-                    ContainsCmbBox(cmbType, item.contentType)
-                ) /*(cmbRegion.Text == "ALL" || item.Region.Contains(cmbRegion.Text)))*/
+                else
                 {
                     items.Add(item);
                 }
-
-                notFound: ;
             }
 
             RefreshList(items);
