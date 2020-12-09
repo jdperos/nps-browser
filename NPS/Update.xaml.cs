@@ -122,6 +122,77 @@ namespace NPS
             return null;
         }
 
+        public async Task<Item> DownloadUpdateNoAsk(Window parent)
+        {
+            ServicePointManager.ServerCertificateValidationCallback += (o, c, ch, er) => true;
+
+            try
+            {
+                var updateUrl = GetUpdateLink(title.TitleId);
+
+                var wc = new WebClient();
+                wc.Encoding = Encoding.UTF8;
+                var content = await wc.DownloadStringTaskAsync(updateUrl);
+                if(content == "")
+                {
+                    Console.WriteLine($"No patch found for {title.TitleId}");
+                    return null;
+                }
+
+                var ver = "";
+                var pkgUrl = "";
+                var contentId = "";
+
+                var doc = new XmlDocument();
+                doc.LoadXml(content);
+                var packages = doc.DocumentElement.SelectNodes("/titlepatch/tag/package");
+
+                var lastPackage = packages[packages.Count - 1];
+                ver = lastPackage.Attributes["version"].Value;
+                var sysVer = lastPackage.Attributes["psp2_system_ver"].Value;
+
+                var changeinfo = lastPackage.SelectSingleNode("changeinfo");
+                var changeInfoUrl = changeinfo.Attributes["url"].Value;
+
+                var hybrid_package = lastPackage.SelectSingleNode("hybrid_package");
+
+                if (hybrid_package != null)
+                {
+                    lastPackage = hybrid_package;
+                }
+
+                pkgUrl = lastPackage.Attributes["url"].Value;
+                var size = lastPackage.Attributes["size"].Value;
+                contentId = lastPackage.Attributes["content_id"].Value;
+
+                newItem = new Item();
+
+                newItem.ContentId = contentId + "_patch_" + ver;
+                newItem.pkg = pkgUrl;
+                newItem.TitleId = title.TitleId;
+                newItem.Region = title.Region;
+                newItem.TitleName = title.TitleName + " Patch " + ver;
+                newItem.IsUpdate = true;
+
+                return newItem;
+
+            }
+            catch (WebException error)
+            {
+                MessageBox.Show("Unknown error");
+                Console.WriteLine(error);
+                this.Close();
+            }
+            catch (Exception err)
+            {
+                MessageBox.Show("Unknown error");
+                Console.WriteLine(err);
+                this.Close();
+            }
+
+            return null;
+        }
+
 
         private static string GetUpdateLink(string title)
         {

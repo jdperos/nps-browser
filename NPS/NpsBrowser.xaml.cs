@@ -766,6 +766,14 @@ namespace NPS
             downloadAllDlcsToolStripMenuItem_Click();
         }
 
+
+        private void downloadAllWithPatchesToolStripMenuItem_Click()
+        {
+            btnDownload_Click();
+            downloadAllDlcsToolStripMenuItem_Click();
+            checkForPatchesAndDownload();
+        }
+
         // lstTitles Menu Strip
         private void showTitleDlcToolStripMenuItem_Click()
         {
@@ -1093,6 +1101,31 @@ namespace NPS
             StartDownload(newItem);
         }
 
+        private async void checkForPatchesAndDownload()
+        {
+            if (string.IsNullOrEmpty(Settings.HmacKey))
+            {
+                MessageBox.Show("No hmackey");
+                return;
+            }
+
+            if (lstTitles.SelectedItems.Count == 0) return;
+
+            var item = ((TitleEntry) lstTitles.SelectedItems[0]).Item;
+
+            var gp = new GamePatches(item);
+
+            //var newItem = await gp.AskForUpdate(this);
+            var newItem = await gp.DownloadUpdateNoAsk(this);
+
+            if (newItem == null)
+            {
+                return;
+            }
+
+            StartDownload(newItem);
+        }
+
         private void StartDownload(Item newItem)
         {
             var dw = new DownloadWorker(newItem);
@@ -1236,6 +1269,7 @@ namespace NPS
         private MenuItem showTitleDlcToolStripMenuItem;
         private MenuItem downloadAllDlcsToolStripMenuItem;
         private MenuItem downloadAllToolStripMenuItem;
+        private MenuItem downloadAllWithPatchesToolStripMenuItem;
         private MenuItem checkForPatchesToolStripMenuItem;
         private MenuItem toggleDownloadedToolStripMenuItem;
         private MenuItem toolStripMenuItem1;
@@ -1293,6 +1327,7 @@ namespace NPS
             showTitleDlcToolStripMenuItem = this.FindControl<MenuItem>("showTitleDlcToolStripMenuItem");
             downloadAllDlcsToolStripMenuItem = this.FindControl<MenuItem>("downloadAllDlcsToolStripMenuItem");
             downloadAllToolStripMenuItem = this.FindControl<MenuItem>("downloadAllToolStripMenuItem");
+            downloadAllWithPatchesToolStripMenuItem = this.FindControl<MenuItem>("downloadAllWithPatchesToolStripMenuItem");
             checkForPatchesToolStripMenuItem = this.FindControl<MenuItem>("checkForPatchesToolStripMenuItem");
             toggleDownloadedToolStripMenuItem = this.FindControl<MenuItem>("toggleDownloadedToolStripMenuItem");
             toolStripMenuItem1 = this.FindControl<MenuItem>("toolStripMenuItem1");
@@ -1338,6 +1373,7 @@ namespace NPS
             showTitleDlcToolStripMenuItem.Command = ReactiveCommand.Create(showTitleDlcToolStripMenuItem_Click);
             downloadAllDlcsToolStripMenuItem.Command = ReactiveCommand.Create(downloadAllDlcsToolStripMenuItem_Click);
             downloadAllToolStripMenuItem.Command = ReactiveCommand.Create(downloadAllToolStripMenuItem_Click);
+            downloadAllWithPatchesToolStripMenuItem.Command = ReactiveCommand.Create(downloadAllWithPatchesToolStripMenuItem_Click);
             checkForPatchesToolStripMenuItem.Command = ReactiveCommand.Create(checkForPatchesToolStripMenuItem_Click);
             toggleDownloadedToolStripMenuItem.Command = ReactiveCommand.Create(toggleDownloadedToolStripMenuItem_Click);
             toolStripMenuItem1.Command = ReactiveCommand.Create(toolStripMenuItem1_Click);

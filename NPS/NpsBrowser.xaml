@@ -125,6 +125,7 @@
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Name="downloadAllToolStripMenuItem" Header="Download All" />
+                            <MenuItem Name="downloadAllWithPatchesToolStripMenuItem" Header="Download All w/ Patches" />
                             <MenuItem Name="checkForPatchesToolStripMenuItem" Header="Check for Patches" />
                             <MenuItem Name="toggleDownloadedToolStripMenuItem" Header="Toggle Download Mark" />
                             <MenuItem Name="toolStripMenuItem1" Header="Download CompPack" />
