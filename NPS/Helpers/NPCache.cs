@@ -73,5 +73,10 @@ namespace NPS.Helpers
         {
             UpdateDate = creationDate;
         }
+
+        public static string GetNPSCacheFP()
+        {
+            return Path;
+        }
     }
 }

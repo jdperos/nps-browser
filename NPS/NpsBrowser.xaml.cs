@@ -98,6 +98,10 @@ namespace NPS
 
         public async void Start()
         {
+            if(!File.Exists(NPCache.GetNPSCacheFP()))
+            {
+                File.Create(NPCache.GetNPSCacheFP());
+            }
             NewVersionCheck();
 
             _timer1.Start();
