@@ -22,7 +22,7 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Publish
-      run: dotnet publish -c Release -r win-x64 --no-restore
+      run: dotnet publish -c Release -r win-x64
     - name: Get date
       run: |
         echo "DATE=$(date +%y%m%d)" >> $GITHUB_ENV
