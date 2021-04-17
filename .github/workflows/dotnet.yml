@@ -34,5 +34,5 @@ jobs:
       with:
         artifacts: NPS/bin/Release/netcoreapp3.0/win-x64/publish/**
         name: NPSBrowser
-        tag: day${{ env.DATE }}
+        tag: 0.94 #day${{ env.DATE }}
         token: ${{ secrets.GITHUB_TOKEN }}
