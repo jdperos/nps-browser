@@ -28,4 +28,5 @@ jobs:
       uses: ncipollo/release-action@v1.8.4
       with:
         artifacts: NPS/*
+        name: NPSBrowser
         token: ${{ secrets.GITHUB_TOKEN }}
