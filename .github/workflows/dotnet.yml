@@ -22,7 +22,7 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Publish
-      run: dotnet publish -r win-x64
+      run: dotnet publish -c Release -r win-x64
     - name: Get date
       run: |
         echo "DATE=$(date +%y%m%d)" >> $GITHUB_ENV
@@ -32,7 +32,7 @@ jobs:
       # uses: ncipollo/release-action@7c5046364401a3e122086927d07617a3d756b658
       uses: ncipollo/release-action@v1.8.4
       with:
-        artifacts: NPS/*
+        artifacts: bin/Release/net3.0/win-x64/publish/**
         name: NPSBrowser
         tag: day${{ env.DATE }}
         token: ${{ secrets.GITHUB_TOKEN }}
