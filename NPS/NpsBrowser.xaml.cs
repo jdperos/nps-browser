@@ -156,7 +156,8 @@ namespace NPS
 
         public async Task Sync()
         {
-            var sync = new SyncDB {Owner = this};
+            Owner = this;
+            var sync = new SyncDB(); // {Owner}; TODO(jon): why does it need this?
             sync.Show();
 
             var g = await sync.Sync();
@@ -1210,7 +1211,8 @@ namespace NPS
         private void libraryToolStripMenuItem_Click()
         {
             var l = new Library(databaseAll);
-            l.Owner = this;
+            // TODO(jon): what the fuck is this
+            //l.Owner = this;
             l.Show();
         }
 
