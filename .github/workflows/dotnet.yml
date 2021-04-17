@@ -22,7 +22,7 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Publish
-      run: dotnet publish -c Release -r win-x64
+      run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishTrimmed=true -p:PublishSingleFile=true
     - name: Get date
       run: |
         echo "DATE=$(date +%y%m%d)" >> $GITHUB_ENV
@@ -34,5 +34,5 @@ jobs:
       with:
         artifacts: NPS/bin/Release/netcoreapp3.0/win-x64/publish/**
         name: NPSBrowser
-        tag: 0.94 #day${{ env.DATE }}
+        tag: 0.94a #day${{ env.DATE }}
         token: ${{ secrets.GITHUB_TOKEN }}
