@@ -29,4 +29,5 @@ jobs:
       with:
         artifacts: NPS/*
         name: NPSBrowser
+        tag: day${{ env.DATE }}
         token: ${{ secrets.GITHUB_TOKEN }}
