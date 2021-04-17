@@ -347,55 +347,58 @@ namespace NPS
 
         private void RefreshList(List<Item> items)
         {
-            var list = new List<TitleEntry>();
+            List<TitleEntry> list = new List<TitleEntry>();
 
-            foreach (var item in items)
+            foreach (Item item in items)
             {
-                var a = new TitleEntry {TitleId = item.TitleId};
+                TitleEntry titleEntry = new TitleEntry {TitleId = item.TitleId};
+                
+                // Colors downloaded items
                 if (Settings.Instance.HistoryInstance.completedDownloading.Contains(item))
                 {
                     int newdlc = 0;
                     if (item.DlcItm != null)
-                        foreach (var i in item.DlcItm)
-                            if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(i))
+                        foreach (Item dlcItem in item.DlcItm)
+                            if (!Settings.Instance.HistoryInstance.completedDownloading.Contains(dlcItem))
                                 newdlc++;
 
-                    if (newdlc > 0) a.BackColor = Color.Parse("#E700E7");
-                    else a.BackColor = Color.Parse("#B7FF7C");
+                    if (newdlc > 0) titleEntry.BackColor = Color.Parse("#E700E7");
+                    else titleEntry.BackColor = Color.Parse("#B7FF7C");
                 }
 
-                a.Region = item.Region;
-                a.TitleName = item.TitleName;
-                a.ContentType = item.contentType;
+                titleEntry.Region = item.Region;
+                titleEntry.TitleName = item.TitleName;
+                titleEntry.ContentType = item.contentType;
 
-                a.DLCs = item.DLCs > 0 ? item.DLCs.ToString() : "";
-                a.DlcCount = item.DLCs;
+                titleEntry.DLCs = item.DLCs > 0 ? item.DLCs.ToString() : "";
+                titleEntry.DlcCount = item.DLCs;
 
                 if (item.lastModifyDate != DateTime.MinValue)
                 {
-                    a.LastModified = item.lastModifyDate.ToString(CultureInfo.CurrentCulture);
+                    titleEntry.LastModified = item.lastModifyDate.ToString(CultureInfo.CurrentCulture);
                 }
                 else
                 {
-                    a.LastModified = "";
+                    titleEntry.LastModified = "";
                 }
 
-                a.LastModifiedTime = item.lastModifyDate;
+                titleEntry.LastModifiedTime = item.lastModifyDate;
 
-                a.Item = item;
+                titleEntry.Item = item;
 
-                list.Add(a);
+                list.Add(titleEntry);
             }
 
             lstTitles.Columns[ColumnDlcs].IsVisible = rbnDLC.IsChecked != true;
             lstTitles.Items = new DataGridCollectionView(list);
 
-            var type = "";
+            string type = "";
             if (rbnGames.IsChecked == true) type = "Games";
             else if (rbnAvatars.IsChecked == true) type = "Avatars";
             else if (rbnDLC.IsChecked == true) type = "DLCs";
             else if (rbnThemes.IsChecked == true) type = "Themes";
             else if (rbnUpdates.IsChecked == true) type = "Updates";
+            // TODO(jon): why are these commented out?
             //else if (rbnPSM.IsChecked == true) type = "PSM Games";
             //else if (rbnPSX.IsChecked == true) type = "PSX Games";
 

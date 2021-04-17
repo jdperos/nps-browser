@@ -28,8 +28,9 @@ namespace NPS
 
             var tasks = new[]
             {
-                // LoadDatabase(Settings.Instance.PsvUpdateUri, DatabaseType.VitaUpdate),
-                // LoadDatabase(Settings.Instance.Ps4UpdateUri, DatabaseType.PS4Update),
+                // TODO(jon): why are these commented out?
+                LoadDatabase(Settings.Instance.PsvUpdateUri, DatabaseType.VitaUpdate),
+                LoadDatabase(Settings.Instance.Ps4UpdateUri, DatabaseType.PS4Update),
 
                 LoadDatabase(Settings.Instance.PsvUri, DatabaseType.Vita),
                 LoadDatabase(Settings.Instance.PsmUri, DatabaseType.ItsPsm),
@@ -44,10 +45,10 @@ namespace NPS
                 LoadDatabase(Settings.Instance.Ps4DlcUri, DatabaseType.PS4DLC),
 
                 LoadDatabase(Settings.Instance.PsvThemeUri, DatabaseType.VitaTheme),
-                // LoadDatabase(Settings.Instance.Ps3AvatarUri, DatabaseType.PS3Avatar),
-                // LoadDatabase(Settings.Instance.PspThemeUri, DatabaseType.PSPTheme),
-                // oadDatabase(Settings.Instance.Ps3ThemeUri, DatabaseType.PS3Theme),
-                // LoadDatabase(Settings.Instance.Ps4ThemeUri, DatabaseType.PS4Theme)
+                LoadDatabase(Settings.Instance.Ps3AvatarUri, DatabaseType.PS3Avatar),
+                LoadDatabase(Settings.Instance.PspThemeUri, DatabaseType.PSPTheme),
+                LoadDatabase(Settings.Instance.Ps3ThemeUri, DatabaseType.PS3Theme),
+                LoadDatabase(Settings.Instance.Ps4ThemeUri, DatabaseType.PS4Theme)
             };
 
             _counterMax = tasks.Length;
