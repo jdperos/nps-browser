@@ -8,8 +8,7 @@ however with the source code I have been able to make some improvements to NPS B
 seems to be maintained - especially for bulk file collection.
 
 Among these improvements:
--Can download multiple selections with one click
--Added a Download All w/ Patches option that bypasses patch prompts
--Added an OR operator into the search "||"
--PS3 games now unpack into a PS3 folder, and then by game, since previous methods would prevent games from downloading if they shared a title, 
-also disassociated game PKG files from their DLC files
+- Can download multiple selections with one click
+- Added a Download All w/ Patches option that bypasses patch prompts
+- Added an OR operator into the search "||"
+- PS3 games now unpack into a PS3 folder, and then by game, since previous methods would prevent games from downloading if they shared a title, also disassociated game PKG files from their DLC files
