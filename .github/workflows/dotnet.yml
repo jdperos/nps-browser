@@ -32,7 +32,7 @@ jobs:
       # uses: ncipollo/release-action@7c5046364401a3e122086927d07617a3d756b658
       uses: ncipollo/release-action@v1.8.4
       with:
-        artifacts: bin/Release/net3.0/win-x64/publish/**
+        artifacts: bin/Release/netcoreapp3.0/win-x64/publish/**
         name: NPSBrowser
         tag: day${{ env.DATE }}
         token: ${{ secrets.GITHUB_TOKEN }}
